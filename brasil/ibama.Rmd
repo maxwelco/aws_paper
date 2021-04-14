@@ -1,0 +1,98 @@
+---
+title: "ibama"
+author: "Maxwel Coura Oliveira"
+date: "4/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+options(scipen=999)
+library(tidyverse)
+```
+
+```{r}
+sales_class <- readxl::read_excel("Ibama/Vendas_por_classe_de_uso_2019.xls")
+```
+
+```{r}
+sales_class1 <- sales_class %>% 
+  janitor::row_to_names(row_number = 2) %>% 
+  janitor::clean_names() %>% 
+  janitor::remove_empty() %>% 
+  dplyr::select(-na) %>% 
+  drop_na() %>% 
+  filter(classe_de_uso != "Total") %>% 
+  mutate_at(c(2,3), as.double) %>% 
+  mutate(highlight = if_else(classe_de_uso %in% "Herbicida", TRUE, FALSE),
+         variable_col = if_else(highlight == TRUE, classe_de_uso, "NA"))
+#  mutate_if(is_character, as_factor)
+sales_class1
+```
+
+```{r}
+sales_class2 <- sales_class1 %>% 
+  mutate(classe_de_uso = fct_collapse(classe_de_uso,
+                                      Outros = c("Protetor de Sementes",
+                                                 "Inseticida, Acaricida, Cupinicida, Formicida, Fungicida", "Formicida, Inseticida", "Formicida", "Inseticida, Formicida, Fungicida, Nematicida",
+"Moluscicida", "Fungicida, Formicida, Herbicida, Inseticida, Acaricida, Nematicida"))) %>% 
+  group_by(classe_de_uso) %>% 
+  summarise(qtde_ton_ia = sum(qtde_ton_ia),
+            perc_percent = sum(perc_percent)) %>% 
+  mutate(classe_de_uso = fct_relevel(classe_de_uso, "Outros")) 
+```
+
+
+
+```{r}
+library(ggtext)
+library(extrafont)
+library(ggthemes)
+library(showtext)
+showtext_auto()
+font_add_google("Noto Sans JP", "noto_jp")
+font_add_google("Aclonica", "aclonica")
+```
+
+
+```{r}
+theme_style <- theme(plot.title = element_markdown(hjust = 1,
+  family = "aclonica", size = 14),
+  plot.subtitle = element_markdown(hjust = 1,
+  family = "noto_jp", size = 12),
+  plot.caption = element_markdown(hjust = 1,
+  family = "aclonica", size = 6),
+  legend.position = "none",
+  axis.text = element_markdown(family = "noto_jp")
+  )
+
+
+theme_set(theme_test() + theme_style)
+```
+
+
+```{r}
+sales_class1 %>% 
+  ggplot(aes(x = fct_reorder(classe_de_uso,  qtde_ton_ia), 
+             y = qtde_ton_ia, fill = highlight)) +
+  geom_col() +
+  coord_flip() +
+  labs(x = "",
+       y = "",
+       title = "Vendas por classes de usos dos produtos formulados em 2019",
+       subtitle = "Unidade de medida em toneladas de ingrediente ativo",
+       caption = "IBAMA 2020 | Figura: @maxwelco") +
+  
+  ggsave("vendas.pdf")
+```
+
+
+
+
+
+
+
