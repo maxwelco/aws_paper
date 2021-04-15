@@ -92,7 +92,61 @@ sales_class1 %>%
 
 
 
+# Ingredientes ativos
+
+```{r warning = FALSE , message = FALSE}
+library(readxl)
+
+path <- list.files(path = "Ibama", pattern = "*.xls", full.names = T) %>% 
+  as_tibble() %>% 
+  rename(files = value)
 
 
+data <- path %>% 
+  mutate(data = map(files, read_excel)) %>% 
+  filter(str_detect(files, "ingredientes")) %>% 
+  mutate(year = 2009:2019)
+```
 
+  
+  
+```{r}
+clean_data <- function(y){
+  
+data %>% 
+  filter(year == y) %>% 
+  unnest(data) %>% 
+  janitor::row_to_names(row_number = 2) %>% 
+#  mutate(ano = "2012") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(cols = ro:df, names_to = "state", values_to = "ton") %>% 
+  dplyr::select(ingrediente_ativo, state, ton, vendas_sem_definicao_de_uf,
+                vendas_totais) %>% 
+  mutate_at(c("ton", "vendas_sem_definicao_de_uf", "vendas_totais"), as.double) %>% 
+  mutate_if(is.double, ~round(., 2),
+            is_character, as_factor) %>% 
+  filter(!is.na(ton))
+}
+```
+
+```{r}
+data1 <- data %>% 
+  mutate(clean_dt = map(year, clean_data)) %>% 
+  dplyr::select(-files, -data) %>% 
+  unnest(clean_dt) 
+```
+```{r}
+data1 %>% 
+  tail()
+```
+
+
+```{r}
+data1 %>% 
+  filter(ingrediente_ativo == "2,4-D") %>% 
+  ggplot(aes(x = year, y = ton, color = state, group = state)) +
+  geom_line() +
+  labs(title = "Vendas de Ingredientes Ativos por Unidade da Federação",
+       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)")
+```
 
