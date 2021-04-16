@@ -206,4 +206,66 @@ import
 
 
 
+# Histórico agrotóxicos
+
+
+```{r}
+path1 <- "Ibama/Historico total agrotóxicos_por estado_2000_2018-1.xls"
+
+
+historico <- readxl::read_excel(path1)
+```
+
+```{r}
+historico1 <- historico %>% 
+  janitor::row_to_names(row_number = 2)  %>% 
+  janitor::clean_names() %>% 
+  rename(location = na) %>% 
+  pivot_longer(cols = qtde:var_percent_15, 
+               names_to = "variable", values_to = "value") %>% 
+  mutate(year = case_when(
+    variable %in% c("qtde", "part_percent") ~ "2000",
+    variable %in% c("qtde_2", "part_percent_2", "var_percent") ~ "2001",
+    variable %in% c("qtde_3", "part_percent_3", "var_percent_2") ~ "2002",
+    variable %in% c("qtde_4", "part_percent_4", "var_percent_3") ~ "2003",
+    variable %in% c("qtde_5", "part_percent_5", "var_percent_4") ~ "2004",
+    variable %in% c("qtde_6", "part_percent_6", "var_percent_5") ~ "2005",
+    variable %in% c("qtde_7", "part_percent_7", "var_percent_6") ~ "2006",
+    variable %in% c("qtde_8", "part_percent_8", "var_percent_7") ~ "2009",
+    variable %in% c("qtde_9", "part_percent_9", "var_percent_8") ~ "2010",
+    variable %in% c("qtde_10", "part_percent_10", "var_percent_9") ~ "2011",
+    variable %in% c("qtde_11", "part_percent_11", "var_percent_10") ~ "2012",
+    variable %in% c("qtde_12", "part_percent_12", "var_percent_11") ~ "2013",
+    variable %in% c("qtde_13", "part_percent_13", "var_percent_12") ~ "2014",
+    variable %in% c("qtde_14", "part_percent_14", "var_percent_13") ~ "2015",
+    variable %in% c("qtde_15", "part_percent_15", "var_percent_14") ~ "2016",
+    variable %in% c("qtde_16", "part_percent_16", "var_percent_15") ~ "2017",
+    variable %in% c("qtde_17", "part_percent_17", "var_percent_16") ~ "2018",
+    TRUE ~ "NA"))
+```
+
+
+```{r}
+historico2 <- historico1 %>% 
+mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>% 
+  mutate(variable = fct_recode(variable,
+                               "qtde" = "qtde_",
+                               "part_percent" = "part_percent_",
+                               "var_percent" = "var_percent_")) %>% 
+  mutate(value = round(as.double(value), 2),
+         year = as.integer(year)) %>% 
+  group_by(year, location) %>% 
+#  rowid_to_column() %>% 
+  pivot_wider(
+              names_from = variable,  values_fn = list(count=list),
+              values_from = value) %>% 
+  unchop(everything())
+```
+
+
+
+
+
+
+
 
