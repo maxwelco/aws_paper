@@ -1,0 +1,93 @@
+---
+title: "sindiveg"
+author: "Maxwel Coura Oliveira"
+date: "5/6/2021"
+output: html_document
+---
+
+
+
+```{r}
+library(tidyverse)
+```
+
+```{r warning = FALSE, message = FALSE}
+# qde produto comercial (ton)
+prod_comercial <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>% 
+  janitor::row_to_names(row_number = 7) %>% 
+  janitor::clean_names() %>% 
+  rename(cultura = na) %>%
+  dplyr::select(1:11) %>% 
+  mutate(x2000 = as.double(x2000)) %>%
+  pivot_longer(cols = 2:11, 
+               names_to = "ano", 
+               values_to = "ton_prod") %>% 
+  filter(cultura != "Total Geral:") %>% 
+  mutate(ano = str_remove(ano, pattern = "x")) %>% 
+  drop_na()
+glimpse(prod_comercial)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+# qde ingrediente ativo (ton)
+ing_ativo <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>% 
+  janitor::row_to_names(row_number = 7) %>% 
+  janitor::clean_names() %>% 
+  rename(cultura = na) %>%
+  dplyr::select(1, 12:21) %>% 
+  mutate(x2000_2 = as.double(x2000_2)) %>% 
+    pivot_longer(cols = 2:11, 
+               names_to = "ano", 
+               values_to = "ton_ing") %>% 
+  filter(cultura != "Total Geral:") %>% 
+  mutate(ano = str_remove(ano, pattern = "x"),
+         ano = str_remove(ano, pattern = "_2")) %>% 
+  drop_na()
+glimpse(ing_ativo)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+# valor (US$ 1000)
+valor <- total <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>% 
+  janitor::row_to_names(row_number = 7) %>% 
+  janitor::clean_names() %>% 
+  rename(cultura = na) %>%
+  dplyr::select(1, 22:31) %>% 
+  mutate(x2000_3 = as.double(x2000_3)) %>% 
+    pivot_longer(cols = 2:11, 
+               names_to = "ano", 
+               values_to = "valor_mil_us") %>% 
+  filter(cultura != "Total Geral:") %>% 
+  mutate(ano = str_remove(ano, pattern = "x"),
+         ano = str_remove(ano, pattern = "_3")) %>% 
+  drop_na()
+glimpse(valor)
+```
+
+
+```{r}
+sindveg_pest <- prod_comercial %>% 
+  left_join(ing_ativo, by = c("cultura", "ano")) %>% 
+  left_join(valor, by = c("cultura", "ano")) %>% 
+  drop_na() %>% 
+  mutate(ano = as.double(ano))
+```
+
+
+
+
+```{r}
+sindveg_pest %>% 
+  filter(cultura == "Amendoim") %>% 
+  ggplot(aes(x = ano, y = ton_ing)) +
+  geom_point() +
+  geom_line()
+```
+
+
+
+
+
+
