@@ -140,6 +140,8 @@ data1 <- data %>%
   mutate(ingrediente_ativo = fct_collapse(ingrediente_ativo,
                                           "glifosato" = "glifosato e seus sais"))
 ```
+
+
 ```{r}
 data1 %>% 
   filter(ingrediente_ativo == "glifosato")
@@ -148,10 +150,12 @@ data1 %>%
 
 ```{r}
 data1 %>% 
-  filter(ingrediente_ativo %in% c("atrazina", "2,4-d", "glifosato")) %>% 
-  ggplot(aes(x = year, y = vendas_totais, color = ingrediente_ativo)) +
+  filter(ingrediente_ativo %in% c("atrazina", "2,4-d", "glifosato", "dicloreto de paraquate")) %>% 
+  filter(state %in% c("pr", "rs", "mt", "ma")) %>% 
+  ggplot(aes(x = year, y = ton, color = ingrediente_ativo)) +
   geom_line() +
   geom_point() +
+  facet_grid(~ state) + 
 #  geom_label() +
   scale_x_continuous(
     label = scales::number_format(accuracy = 1)) +
@@ -159,7 +163,8 @@ data1 %>%
        title = "Vendas de Ingredientes Ativos por Unidade da Federação",
        subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  ggsave("fig.png")
 ```
 
 

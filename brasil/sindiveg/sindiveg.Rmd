@@ -80,10 +80,11 @@ sindveg_pest <- prod_comercial %>%
 
 ```{r}
 sindveg_pest %>% 
-  filter(cultura == "Amendoim") %>% 
-  ggplot(aes(x = ano, y = ton_ing)) +
+  filter(cultura %in% c("Soybean", "Café")) %>% 
+  ggplot(aes(x = ano, y = ton_ing, color = cultura)) +
+  geom_line() +
   geom_point() +
-  geom_line()
+  ggsave("soja.png")
 ```
 
 
