@@ -97,7 +97,7 @@ sales_class1 %>%
 ```{r warning = FALSE , message = FALSE}
 library(readxl)
 
-path <- list.files(path = "Ibama", pattern = "*.xls", full.names = T) %>% 
+path <- list.files(path = "ibama_2", pattern = "*.xls", full.names = T) %>% 
   as_tibble() %>% 
   rename(files = value)
 
@@ -249,7 +249,7 @@ herb_imp %>%
 
 
 ```{r}
-path1 <- "Ibama/Historico total agrotóxicos_por estado_2000_2018-1.xls"
+path1 <- "Historico total agrotóxicos_por estado_2000_2018-1.xls"
 
 
 historico <- readxl::read_excel(path1)
@@ -301,6 +301,14 @@ mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>%
   unchop(everything())
 ```
 
+```{r}
+historico2 %>% 
+  filter(location %in% c("RS", "PR", "SC")) %>% 
+  ggplot(aes(x = year, y = qtde, color = location)) +
+  geom_line() +
+  geom_point() +
+  theme(legend.position = "bottom")
+```
 
 
 
