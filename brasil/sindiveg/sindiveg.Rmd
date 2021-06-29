@@ -41,8 +41,7 @@ readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>%
                values_to = "ton_prod") %>% 
   filter(cultura != "Total Geral:") %>% 
   mutate(ano = str_remove(ano, pattern = "x")) %>% 
-  drop_na()
-glimpse(prod_comercial) -> prod_comercial2 
+  drop_na() -> prod_comercial2 
 ```
 
 ```{r}
@@ -68,6 +67,7 @@ ing_ativo1 <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>%
   drop_na()
 glimpse(ing_ativo1)
 ```
+
 
 ```{r}
 # produto comercial apenas
@@ -127,7 +127,6 @@ readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>%
   mutate(ano = str_remove(ano, pattern = "x"),
          ano = str_remove(ano, pattern = "_3")) %>% 
   drop_na()
-glimpse(valor)
 ```
 
 
@@ -185,6 +184,12 @@ readxl::read_excel("conab/soja.xls", sheet = "Área") %>%
          year = as.double(year) + 1) %>% 
   filter(location == "BRASIL") -> brasil
 ```
+```{r}
+brasil %>% 
+  ggplot(aes(x = year, y = area)) +
+  geom_point() +
+  geom_line()
+```
 
 
 ```{r}
@@ -218,9 +223,9 @@ readxl::read_excel("conab/algodao.xls", sheet = "Área") %>%
 ```{r}
 sindveg_pest %>% 
   filter(cultura == "Algodão") %>% 
-  left_join(brasil_arroz, by = c("ano" = "year")) %>% 
+  left_join(algodao, by = c("ano" = "year")) %>% 
   mutate(area = area * 1000) %>% 
-  mutate(rate = ton_ing *1000 / area) %>% 
+  mutate(rate = ton_ing * 1000 / area) %>% 
   ggplot(aes(x = ano, y = rate)) +
   geom_point() +
   geom_line() +

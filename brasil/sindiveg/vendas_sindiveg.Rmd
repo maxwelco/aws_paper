@@ -1,0 +1,113 @@
+---
+title: "vendas_sindiveg"
+author: "Maxwel Coura Oliveira"
+date: "6/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(pdftools)
+library(ggthemes)
+library(ggtext)
+```
+
+```{r}
+raw_pdf <- pdftools::pdf_text("vendas_hist.pdf")
+```
+
+
+```{r}
+raw_text <- raw_pdf[[1]] %>% 
+  str_split("\n") %>% 
+  unlist()
+```
+
+```{r}
+table_trimmed <- raw_text %>% 
+  .[13:(length(raw_text)-1)] %>% 
+  str_trim()
+```
+
+
+```{r}
+all_col_names <- c(
+  "year",
+  "total",
+  "herbicida",
+  "fungicida",
+  "inseticida",
+  "acaricida",
+  "outros"
+)
+
+tab_names <- fwf_empty(
+  table_trimmed,
+  col_names = all_col_names
+)
+```
+
+```{r}
+vendas_1 <- table_trimmed %>% 
+  read_fwf(
+    tab_names
+  )
+
+
+vendas_2 <- raw_pdf[[2]] %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  .[1:41] %>% 
+  str_trim() %>% 
+  str_replace_all("\\s{2,}", "|") %>% 
+  read_delim(
+    delim = "|", 
+    col_names = all_col_names
+  ) 
+```
+
+```{r}
+# vendas no valor de US$ 10000
+vendas_1 %>% 
+  bind_rows(vendas_2) %>% 
+  mutate_if(is_character, ~ str_remove_all(., "\\.")) %>% 
+   mutate_if(is.double, ~ str_remove_all(., "\\.")) %>% 
+  mutate_if(is_character, as.double) -> vendas_3
+```
+
+
+
+
+```{r}
+# (×1000)
+vendas_3 %>% 
+  dplyr::select(year, total, herbicida) %>% 
+  ggplot(aes(x = year, y = herbicida * 1000)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
+                                                    big.mark = ",",
+                                                    decimal.mark = ".")) +
+  labs(y = "Vendas de herbicidas",
+       x = NULL,
+       title = "O mercado de herbicidas no Brasil",
+       subtitle = "As vendas de herbicidas no Brasil aumentaram significantemente após a introdução da tecnologia Roundup <br>Ready em 2002",
+       caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
+  geom_segment(aes(x = 2002, y = 500000000, 
+                   xend = 2002, yend = 1500000000), color = "tomato") +
+  geom_curve(x = 2002.3, y = 800000000, xend = 2005, yend = 800000000,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "tomato") + 
+  annotate("text", x = 2011, y = 1000000000, 
+           label = "Introdução da tecnologia\n Roundup Ready",) +
+  theme_fivethirtyeight() +
+  theme(plot.title.position = "plot",
+        plot.subtitle = element_markdown(size = 10))
+
+ggsave("vendas.pdf")
+```
+

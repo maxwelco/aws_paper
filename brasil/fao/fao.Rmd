@@ -1,0 +1,45 @@
+---
+title: "fa0_herbicide"
+author: "Maxwel Coura Oliveira"
+date: "6/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+read_csv("herbicide_fao.csv") %>% 
+  ggplot(aes(x = Year, y = Value)) +
+  geom_smooth(method = "lm") +
+  geom_point() +
+  geom_line() +
+  labs(title = "Herbicide use in Brazil",
+       y = "Tonnes", 
+       caption = "Source: FAO")
+```
+
+
+```{r}
+options(scipen = 999)
+50000*1000
+```
+
+
+```{r}
+read_csv("br_population.csv") %>% 
+  filter(Element %in% c("Rural population", "Urban population")) %>% 
+  mutate(Element = str_remove_all(Element, " population")) %>% 
+  ggplot(aes(x = Year, y = Value, color = Element)) +
+  geom_point(alpha = 0.2) +
+  geom_line() +
+  theme_classic() +
+  labs(y = "Population (x1000)")
+```
+

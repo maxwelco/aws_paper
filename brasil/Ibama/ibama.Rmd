@@ -16,7 +16,7 @@ library(tidyverse)
 ```
 
 ```{r}
-sales_class <- readxl::read_excel("Vendas_por_classe_de_uso_2019.xls")
+sales_class <- readxl::read_excel("ibama_2/Vendas_por_classe_de_uso_2019.xls")
 ```
 
 ```{r}
@@ -173,7 +173,7 @@ data1 %>%
 
 
 ```{r}
-path0 <- "SERIE_2009_2019_Prod_Imp_Exp_Vendas_internas_detalhadas_por_IA.xls"
+path0 <- "ibama_2/SERIE_2009_2019_Prod_Imp_Exp_Vendas_internas_detalhadas_por_IA.xls"
 
 read_import <- function(year){
   
@@ -250,11 +250,11 @@ herb_imp %>%
 
 
 
-# Histórico agrotóxicos
+# VENDAS DE AGROTÓXICOS E AFINS NO BRASIL NO PERÍODO DE 2000 A 2018 (Unidade: tonelada de ingrediente ativo)
 
 
 ```{r}
-path1 <- "Historico total agrotóxicos_por estado_2000_2018-1.xls"
+path1 <- "ibama_2/Historico total agrotóxicos_por estado_2000_2018-1.xls"
 
 
 historico <- readxl::read_excel(path1)
@@ -316,6 +316,28 @@ historico2 %>%
 ```
 
 
+```{r}
+historico2 %>% 
+  drop_na() %>% 
+  filter(!location %in% c("NORTE", "CENTRO-OESTE", "NORDESTE", "SUDESTE", "SUL", "BRASIL",
+                          "Total", "SEM DEFINIÇÃO")) %>% 
+  mutate(highlight = if_else(location %in% c("MT", "PR", "RS", "SP"), TRUE, FALSE),
+         variable = if_else(highlight == TRUE, location, "NA")) %>% 
+  ggplot(aes(x = year, y = qtde, color = variable, 
+             group = location, label = location)) +
+  geom_line() +
+  geom_point() +
+#  geom_label() + 
+  scale_color_manual(values = c("#942DC7", "gray80",  "#F2D9F3", "#9966FF", "#00E5E5")) +
+  scale_x_continuous(
+    label = scales::number_format(accuracy = 1)) +
+  labs(x = "", y ="",
+       title = "Vendas de Ingredientes Ativos por Unidade da Federação",
+       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
+       caption = "IBAMA 2020 | Figura: @maxwelco") +
+  theme(legend.position = "bottom") +
+  ggsave("fig.png")
+```
 
 
 
