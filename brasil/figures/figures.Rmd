@@ -16,7 +16,7 @@ library(ggtext)
 ```
 
 ```{r}
-raw_pdf <- pdftools::pdf_text("vendas_hist.pdf")
+raw_pdf <- pdftools::pdf_text("../sindiveg/vendas_hist.pdf")
 ```
 
 
@@ -299,11 +299,36 @@ historico2 %>%
   theme(legend.position = "bottom") +
   ggsave("fig.png")
 ```
+<!-- Figura 2 - Aldo -->
+
+```{r}
+readxl::read_excel("dados_ibama_aldo.xlsx") %>% 
+  dplyr::select(14:27) %>% 
+  janitor::row_to_names(row_number = 1) %>%
+  janitor::clean_names() %>% 
+  filter(na != "Ton ia") %>% 
+  janitor::row_to_names(row_number = 1) %>% 
+  pivot_longer(cols = c(2:11), names_to = "year", values_to = "perc") %>% 
+  rename(ton_ia_2009 = `2009`) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(area_tratada_em_2019)) %>% 
+  mutate(ingrediente_ativo = as_factor(ingrediente_ativo)) %>% 
+  mutate_if(is_character, as.double) -> perc_increase
+```
+
+
+```{r}
+perc_increase %>% 
+  ggplot(aes(x = year, y = perc, color = ingrediente_ativo)) +
+  geom_point() +
+  geom_line() +
+  theme(legend.position = "bottom")
+```
 
 
 
 
-<!-- Figura 2 -->
+<!-- Figura 3 -->
 
 Vendas de ing ativo por regiao
 
@@ -373,6 +398,16 @@ data1 %>%
        caption = "IBAMA 2020 | Figura: @maxwelco") +
   theme(legend.position = "bottom") +
   ggsave("fig2.png")
+```
+
+
+<!-- Figura 4 - Spark -->
+
+
+```{r}
+readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
+  mutate(perc = perc / 100,
+         total_ha_soa = total_ha * perc) 
 ```
 
 

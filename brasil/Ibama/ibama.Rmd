@@ -91,6 +91,8 @@ sales_class1 %>%
 
 # Ingredientes ativos
 
+<!-- Vendas de Ingredientes Ativos por Unidade da Federação -->
+
 ```{r warning = FALSE , message = FALSE}
 library(readxl)
 
@@ -247,6 +249,8 @@ herb_imp %>%
 
 
 
+
+
 # VENDAS DE AGROTÓXICOS E AFINS NO BRASIL NO PERÍODO DE 2000 A 2018 (Unidade: tonelada de ingrediente ativo)
 
 
@@ -330,7 +334,7 @@ historico2 %>%
   scale_x_continuous(
     label = scales::number_format(accuracy = 1)) +
   labs(x = "", y ="",
-       title = "Vendas de Ingredientes Ativos por Unidade da Federação",
+       title = "Vendas de Ingredientes Ativos de pesticidas or Unidade da Federação",
        subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
   theme(legend.position = "bottom") +
