@@ -84,6 +84,7 @@ vendas_1 %>%
 
 ```{r}
 # (×1000)
+(
 vendas_3 %>% 
   dplyr::select(year, total, herbicida) %>% 
   ggplot(aes(x = year, y = herbicida * 1000)) +
@@ -107,7 +108,7 @@ vendas_3 %>%
   theme_fivethirtyeight() +
   theme(plot.title.position = "plot",
         plot.subtitle = element_markdown(size = 10))
-
+)
 ggsave("vendas.png")
 ```
 
@@ -135,6 +136,7 @@ read_csv("crop_harvest.csv") %>%
 
 
 ```{r}
+(
 vendas_3 %>% 
   left_join(area_br, by = "year") %>% 
   mutate(rate_herb = (herbicida * 1000) / area) %>% 
@@ -160,7 +162,7 @@ vendas_3 %>%
   theme_fivethirtyeight() +
   theme(plot.title.position = "plot",
         plot.subtitle = element_markdown(size = 10))
-
+)
 ggsave("vendas_rate.png")
 ```
 
@@ -303,13 +305,13 @@ historico2 %>%
 
 ```{r}
 readxl::read_excel("dados_ibama_aldo.xlsx") %>% 
-  dplyr::select(14:27) %>% 
+  dplyr::select(14:26) %>% 
   janitor::row_to_names(row_number = 1) %>%
   janitor::clean_names() %>% 
   filter(na != "Ton ia") %>% 
   janitor::row_to_names(row_number = 1) %>% 
-  pivot_longer(cols = c(2:11), names_to = "year", values_to = "perc") %>% 
-  rename(ton_ia_2009 = `2009`) %>% 
+  pivot_longer(cols = c(2:10), names_to = "year", values_to = "perc") %>% 
+  rename(ton_ia_2010 = `2010`) %>% 
   janitor::clean_names() %>% 
   filter(!is.na(area_tratada_em_2019)) %>% 
   mutate(ingrediente_ativo = as_factor(ingrediente_ativo)) %>% 
@@ -319,7 +321,9 @@ readxl::read_excel("dados_ibama_aldo.xlsx") %>%
 
 ```{r}
 perc_increase %>% 
-  ggplot(aes(x = year, y = perc, color = ingrediente_ativo)) +
+  ggplot(aes(x = year, y = perc, 
+             color = ingrediente_ativo,
+             group = ingrediente_ativo)) +
   geom_point() +
   geom_line() +
   theme(legend.position = "bottom")
