@@ -11,6 +11,10 @@ output: html_document
 library(tidyverse)
 ```
 
+<!-- VENDAS DE DEFENSIVOS AGRÍCOLAS POR CULTURAS DE DESTINAÇÃO E CLASSES -->
+
+Dados Sindiveg de 2000 a 2009 com herbicidas (produto comercial, ing ativo e valor) por cultura. Mas os dados de 2010 a 2012 possui apenas dados do produto comercial por herbicida seletivo e valor. A planilha tbem possui dados de outros pesticidas. 
+
 ```{r warning = FALSE, message = FALSE}
 # qde produto comercial (ton)
 prod_comercial1 <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>% 
@@ -25,10 +29,8 @@ prod_comercial1 <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %
   filter(cultura != "Total Geral:") %>% 
   mutate(ano = str_remove(ano, pattern = "x")) %>% 
   drop_na()
-glimpse(prod_comercial1)
-```
 
-```{r}
+
 # produto comercial apenas
 readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>% 
   janitor::row_to_names(row_number = 5) %>% 
@@ -42,12 +44,12 @@ readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>%
   filter(cultura != "Total Geral:") %>% 
   mutate(ano = str_remove(ano, pattern = "x")) %>% 
   drop_na() -> prod_comercial2 
-```
 
-```{r}
+
 prod_comercial1 %>% 
   bind_rows(prod_comercial2) -> prod_comercial
 ```
+
 
 
 ```{r warning = FALSE, message = FALSE}
@@ -65,31 +67,8 @@ ing_ativo1 <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %>%
   mutate(ano = str_remove(ano, pattern = "x"),
          ano = str_remove(ano, pattern = "_2")) %>% 
   drop_na()
-glimpse(ing_ativo1)
-```
 
-
-```{r}
-# produto comercial apenas
-readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>% 
-  janitor::row_to_names(row_number = 5) %>% 
-  janitor::clean_names() %>% 
-  rename(cultura = na) %>%
-  dplyr::select(1, 5:7) %>% 
-  mutate(x2010_2 = as.double(x2010_2)) %>% 
-    pivot_longer(cols = 2:4, 
-               names_to = "ano", 
-               values_to = "ton_ing") %>% 
-  filter(cultura != "Total Geral:") %>% 
-  mutate(ano = str_remove(ano, pattern = "x"),
-         ano = str_remove(ano, pattern = "_2")) %>% 
-  drop_na() -> ing_ativo2
-```
-
-
-```{r}
-ing_ativo1 %>% 
-  bind_rows(ing_ativo2) -> ing_ativo
+ing_ativo1 
 ```
 
 
@@ -109,33 +88,8 @@ valor1 <- total <- readxl::read_excel("Sindiveg Pesticide data 2000-2009.xls") %
   mutate(ano = str_remove(ano, pattern = "x"),
          ano = str_remove(ano, pattern = "_3")) %>% 
   drop_na()
-```
 
-
-```{r}
-# produto comercial apenas
-readxl::read_excel("Sindiveg Pesticide data 2010 - 12.xls") %>% 
-  janitor::row_to_names(row_number = 5) %>% 
-  janitor::clean_names() %>% 
-  rename(cultura = na) %>%
-  dplyr::select(1, 8:31) %>% 
-  mutate(x2000_3 = as.double(x2000_3)) %>% 
-    pivot_longer(cols = 2:11, 
-               names_to = "ano", 
-               values_to = "valor_mil_us") %>% 
-  filter(cultura != "Total Geral:") %>% 
-  mutate(ano = str_remove(ano, pattern = "x"),
-         ano = str_remove(ano, pattern = "_3")) %>% 
-  drop_na()
-```
-
-
-```{r}
-sindveg_pest <- prod_comercial1 %>% 
-  left_join(ing_ativo1, by = c("cultura", "ano")) %>% 
-  left_join(valor1, by = c("cultura", "ano")) %>% 
-  drop_na() %>% 
-  mutate(ano = as.double(ano))
+valor1
 ```
 
 

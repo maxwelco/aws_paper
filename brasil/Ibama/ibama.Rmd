@@ -13,11 +13,22 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 options(scipen=999) 
 library(tidyverse)
+library(ggtext)
+library(extrafont)
+library(ggthemes)
+library(showtext)
+showtext_auto()
 ```
+
+
+<!-- Vendas por Classes de Usos dos Produtos Formulados – 2019 -->
+
+Toneladas de ia em 2019 vendidos. Herbicidas e varios outros pesticidas.
 
 ```{r}
 sales_class <- readxl::read_excel("ibama_2/Vendas_por_classe_de_uso_2019.xls")
 ```
+
 
 ```{r}
 sales_class1 <- sales_class %>% 
@@ -49,25 +60,11 @@ sales_class2 <- sales_class1 %>%
 
 
 ```{r}
-library(ggtext)
-library(extrafont)
-library(ggthemes)
-library(showtext)
-showtext_auto()
-font_add_google("Noto Sans JP", "noto_jp")
-font_add_google("Aclonica", "aclonica")
-```
-
-
-```{r}
-theme_style <- theme(plot.title = element_markdown(hjust = 1,
-  family = "aclonica", size = 14),
-  plot.subtitle = element_markdown(hjust = 1,
-  family = "noto_jp", size = 12),
-  plot.caption = element_markdown(hjust = 1,
-  family = "aclonica", size = 6),
+theme_style <- theme(plot.title = element_markdown(),
+  plot.subtitle = element_markdown(),
+  plot.caption = element_markdown(),
   legend.position = "none",
-  axis.text = element_markdown(family = "noto_jp")
+  axis.text = element_markdown()
   )
 
 
@@ -87,7 +84,7 @@ sales_class1 %>%
        subtitle = "Unidade de medida em toneladas de ingrediente ativo",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
   
-  ggsave("vendas.pdf")
+  ggsave("vendas.png")
 ```
 
 
@@ -260,6 +257,7 @@ path1 <- "ibama_2/Historico total agrotóxicos_por estado_2000_2018-1.xls"
 historico <- readxl::read_excel(path1)
 ```
 
+
 ```{r}
 historico1 <- historico %>% 
   janitor::row_to_names(row_number = 2)  %>% 
@@ -328,7 +326,7 @@ historico2 %>%
   geom_line() +
   geom_point() +
 #  geom_label() + 
-  scale_color_manual(values = c("#942DC7", "gray80",  "#F2D9F3", "#9966FF", "#00E5E5")) +
+  scale_color_manual(values = c("red", "gray80",  "blue", "darkgreen", "black")) +
   scale_x_continuous(
     label = scales::number_format(accuracy = 1)) +
   labs(x = "", y ="",

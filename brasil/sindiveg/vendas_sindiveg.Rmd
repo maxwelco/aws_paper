@@ -108,6 +108,6 @@ vendas_3 %>%
   theme(plot.title.position = "plot",
         plot.subtitle = element_markdown(size = 10))
 
-ggsave("vendas.pdf")
+ggsave("vendas.png")
 ```
 

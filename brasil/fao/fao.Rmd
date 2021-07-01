@@ -26,11 +26,6 @@ read_csv("herbicide_fao.csv") %>%
 ```
 
 
-```{r}
-options(scipen = 999)
-50000*1000
-```
-
 
 ```{r}
 read_csv("br_population.csv") %>% 

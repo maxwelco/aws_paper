@@ -1,0 +1,383 @@
+---
+title: "figuras"
+author: "Maxwel Coura Oliveira"
+date: "6/30/2021"
+output: html_document
+---
+
+
+<!-- Figura 1A -->
+
+```{r}
+library(tidyverse)
+library(pdftools)
+library(ggthemes)
+library(ggtext)
+```
+
+```{r}
+raw_pdf <- pdftools::pdf_text("vendas_hist.pdf")
+```
+
+
+```{r}
+raw_text <- raw_pdf[[1]] %>% 
+  str_split("\n") %>% 
+  unlist()
+```
+
+```{r}
+table_trimmed <- raw_text %>% 
+  .[13:(length(raw_text)-1)] %>% 
+  str_trim()
+```
+
+
+```{r}
+all_col_names <- c(
+  "year",
+  "total",
+  "herbicida",
+  "fungicida",
+  "inseticida",
+  "acaricida",
+  "outros"
+)
+
+tab_names <- fwf_empty(
+  table_trimmed,
+  col_names = all_col_names
+)
+```
+
+```{r}
+vendas_1 <- table_trimmed %>% 
+  read_fwf(
+    tab_names
+  )
+
+
+vendas_2 <- raw_pdf[[2]] %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  .[1:41] %>% 
+  str_trim() %>% 
+  str_replace_all("\\s{2,}", "|") %>% 
+  read_delim(
+    delim = "|", 
+    col_names = all_col_names
+  ) 
+```
+
+```{r}
+# vendas no valor de US$ 10000
+vendas_1 %>% 
+  bind_rows(vendas_2) %>% 
+  mutate_if(is_character, ~ str_remove_all(., "\\.")) %>% 
+   mutate_if(is.double, ~ str_remove_all(., "\\.")) %>% 
+  mutate_if(is_character, as.double) %>% 
+  filter(!is.na(year)) -> vendas_3
+```
+
+
+
+
+```{r}
+# (×1000)
+vendas_3 %>% 
+  dplyr::select(year, total, herbicida) %>% 
+  ggplot(aes(x = year, y = herbicida * 1000)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
+                                                    big.mark = ",",
+                                                    decimal.mark = ".")) +
+  labs(y = "Vendas de herbicidas",
+       x = NULL,
+       title = "O mercado de herbicidas no Brasil",
+       subtitle = "As vendas de herbicidas no Brasil aumentaram significantemente após a introdução da tecnologia Roundup <br>Ready em 2002",
+       caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
+  geom_segment(aes(x = 2002, y = 500000000, 
+                   xend = 2002, yend = 1500000000), color = "tomato") +
+  geom_curve(x = 2002.3, y = 800000000, xend = 2005, yend = 800000000,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "tomato") + 
+  annotate("text", x = 2011, y = 1000000000, 
+           label = "Introdução da tecnologia\n Roundup Ready",) +
+  theme_fivethirtyeight() +
+  theme(plot.title.position = "plot",
+        plot.subtitle = element_markdown(size = 10))
+
+ggsave("vendas.png")
+```
+
+
+Crop harvest - FAO
+
+
+```{r}
+read_csv("crop_harvest.csv") %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(value)) %>% 
+  group_by(year) %>% 
+  summarise(area = sum(value)) -> area_br
+```
+
+```{r}
+options(scipen = 999)
+read_csv("crop_harvest.csv") %>% 
+  janitor::clean_names() %>% 
+  ggplot(aes(x = year, y = value, color = item)) +
+  geom_point() +
+  geom_line() +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+vendas_3 %>% 
+  left_join(area_br, by = "year") %>% 
+  mutate(rate_herb = (herbicida * 1000) / area) %>% 
+  ggplot(aes(x = year, y = rate_herb)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
+                                                    big.mark = ",",
+                                                    decimal.mark = ".")) +
+  labs(y = "Vendas de herbicidas",
+       x = NULL,
+       title = "O mercado de herbicidas no Brasil",
+       subtitle = "Vendas de herbicidas por ha",
+       caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
+  geom_smooth(method = "lm") +
+#  geom_segment(aes(x = 2002, y = 500000000, 
+#                   xend = 2002, yend = 1500000000), color = "tomato") +
+#  geom_curve(x = 2002.3, y = 800000000, xend = 2005, yend = 800000000,
+#               arrow = arrow(length = unit(0.07, "inch")), 
+#               size = 0.4, curvature = 0.3, color = "tomato") + 
+#  annotate("text", x = 2011, y = 1000000000, 
+#           label = "Introdução da tecnologia\n Roundup Ready",) +
+  theme_fivethirtyeight() +
+  theme(plot.title.position = "plot",
+        plot.subtitle = element_markdown(size = 10))
+
+ggsave("vendas_rate.png")
+```
+
+
+
+
+<!-- Figura 1B -->
+
+```{r}
+read_csv("../fao/herbicide_fao.csv") %>% 
+  ggplot(aes(x = Year, y = Value)) +
+  geom_smooth(method = "lm") +
+  geom_point() +
+  geom_line() +
+  labs(title = "Herbicide use in Brazil",
+       y = "Tonnes", 
+       caption = "Source: FAO")
+```
+   
+
+```{r}
+read_csv("../fao/herbicide_fao.csv") %>% 
+  janitor::clean_names() %>% 
+  left_join(area_br, by = "year") %>%
+  mutate(rate_herb = (value * 1000) / area.y) %>% 
+  ggplot(aes(x = year, y = rate_herb)) +
+#  geom_smooth(method = "lm") +
+  geom_point() +
+  geom_line() +
+  labs(title = "Herbicide use per area in Brazil",
+       y = "Rate (kg / ha)", 
+       caption = "Source: FAO")
+```
+
+
+<!-- Figura 1C -->
+
+
+```{r}
+read_csv("br_population.csv") %>% 
+  filter(Element %in% c("Rural population", "Urban population", 
+                        "Total Population - Both sexes")) %>% 
+  mutate(Element = str_remove_all(Element, " population")) %>% 
+  ggplot(aes(x = Year, y = Value, color = Element)) +
+  geom_point(alpha = 0.2) +
+  geom_line() +
+  theme_classic() +
+  labs(y = "Population (x1000)")
+```
+
+
+
+
+
+<!-- Figura 1D -->
+
+
+# VENDAS DE AGROTÓXICOS E AFINS NO BRASIL NO PERÍODO DE 2000 A 2018 (Unidade: tonelada de ingrediente ativo)
+
+
+```{r}
+path1 <- "../Ibama/ibama_2/Historico total agrotóxicos_por estado_2000_2018-1.xls"
+
+
+historico <- readxl::read_excel(path1)
+```
+
+
+```{r}
+historico1 <- historico %>% 
+  janitor::row_to_names(row_number = 2)  %>% 
+  janitor::clean_names() %>% 
+  rename(location = na) %>% 
+  pivot_longer(cols = qtde:var_percent_15, 
+               names_to = "variable", values_to = "value") %>% 
+  mutate(year = case_when(
+    variable %in% c("qtde", "part_percent") ~ "2000",
+    variable %in% c("qtde_2", "part_percent_2", "var_percent") ~ "2001",
+    variable %in% c("qtde_3", "part_percent_3", "var_percent_2") ~ "2002",
+    variable %in% c("qtde_4", "part_percent_4", "var_percent_3") ~ "2003",
+    variable %in% c("qtde_5", "part_percent_5", "var_percent_4") ~ "2004",
+    variable %in% c("qtde_6", "part_percent_6", "var_percent_5") ~ "2005",
+    variable %in% c("qtde_7", "part_percent_7", "var_percent_6") ~ "2006",
+    variable %in% c("qtde_8", "part_percent_8", "var_percent_7") ~ "2009",
+    variable %in% c("qtde_9", "part_percent_9", "var_percent_8") ~ "2010",
+    variable %in% c("qtde_10", "part_percent_10", "var_percent_9") ~ "2011",
+    variable %in% c("qtde_11", "part_percent_11", "var_percent_10") ~ "2012",
+    variable %in% c("qtde_12", "part_percent_12", "var_percent_11") ~ "2013",
+    variable %in% c("qtde_13", "part_percent_13", "var_percent_12") ~ "2014",
+    variable %in% c("qtde_14", "part_percent_14", "var_percent_13") ~ "2015",
+    variable %in% c("qtde_15", "part_percent_15", "var_percent_14") ~ "2016",
+    variable %in% c("qtde_16", "part_percent_16", "var_percent_15") ~ "2017",
+    variable %in% c("qtde_17", "part_percent_17", "var_percent_16") ~ "2018",
+    TRUE ~ "NA"))
+```
+
+
+```{r}
+historico2 <- historico1 %>% 
+mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>% 
+  mutate(variable = fct_recode(variable,
+                               "qtde" = "qtde_",
+                               "part_percent" = "part_percent_",
+                               "var_percent" = "var_percent_")) %>% 
+  mutate(value = round(as.double(value), 2),
+         year = as.integer(year)) %>% 
+  group_by(year, location) %>% 
+#  rowid_to_column() %>% 
+  pivot_wider(
+              names_from = variable,  values_fn = list(count=list),
+              values_from = value) %>% 
+  unchop(everything())
+```
+
+
+
+```{r}
+historico2 %>% 
+  drop_na() %>% 
+  filter(!location %in% c("NORTE", "CENTRO-OESTE", "NORDESTE", "SUDESTE", "SUL", "BRASIL",
+                          "Total", "SEM DEFINIÇÃO")) %>% 
+  mutate(highlight = if_else(location %in% c("MT", "PR", "RS", "SP"), TRUE, FALSE),
+         variable = if_else(highlight == TRUE, location, "NA")) %>% 
+  ggplot(aes(x = year, y = qtde, color = variable, 
+             group = location, label = location)) +
+  geom_line() +
+  geom_point() +
+#  geom_label() + 
+  scale_color_manual(values = c("red", "gray80",  "blue", "darkgreen", "black")) +
+  scale_x_continuous(
+    label = scales::number_format(accuracy = 1)) +
+  labs(x = "", y ="",
+       title = "Vendas de ingredientes ativos de pesticidas por unidade da federação",
+       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
+       caption = "IBAMA 2020 | Figura: @maxwelco") +
+  theme(legend.position = "bottom") +
+  ggsave("fig.png")
+```
+
+
+
+
+<!-- Figura 2 -->
+
+Vendas de ing ativo por regiao
+
+
+```{r warning = FALSE , message = FALSE}
+library(readxl)
+
+path <- list.files(path = "../Ibama/ibama_2", pattern = "*.xls", full.names = T) %>% 
+  as_tibble() %>% 
+  rename(files = value)
+
+
+data <- path %>% 
+  mutate(data = map(files, read_excel)) %>% 
+  filter(str_detect(files, "ingredientes")) %>% 
+  mutate(year = 2009:2019)
+
+
+
+clean_data <- function(y){
+  
+data %>% 
+  filter(year == y) %>% 
+  unnest(data) %>% 
+  janitor::row_to_names(row_number = 2) %>% 
+#  mutate(ano = "2012") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(cols = ro:df, names_to = "state", values_to = "ton") %>% 
+  dplyr::select(ingrediente_ativo, state, ton, vendas_sem_definicao_de_uf,
+                vendas_totais) %>% 
+  mutate_at(c("ton", "vendas_sem_definicao_de_uf", "vendas_totais"), as.double) %>% 
+  mutate_if(is.double, ~round(., 2),
+            is_character, as_factor) %>% 
+  filter(!is.na(ton))
+}
+
+clean_data("2009")
+
+
+
+data1 <- data %>% 
+  mutate(clean_dt = map(year, clean_data)) %>% 
+  dplyr::select(-files, -data) %>% 
+  unnest(clean_dt) %>% 
+  mutate(ingrediente_ativo = tolower(ingrediente_ativo)) %>% 
+  mutate(ingrediente_ativo = fct_collapse(ingrediente_ativo,
+                                          "glifosato" = "glifosato e seus sais"))
+```
+
+
+
+
+```{r}
+data1 %>% 
+  filter(ingrediente_ativo %in% c("atrazina", "2,4-d", "glifosato", "dicloreto de paraquate")) %>% 
+  filter(state %in% c("pr", "rs", "mt", "ma")) %>% 
+  ggplot(aes(x = year, y = ton, color = ingrediente_ativo)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(~ state) + 
+#  geom_label() +
+  scale_x_continuous(
+    label = scales::number_format(accuracy = 1)) +
+  labs(x = "", y ="",
+       title = "Vendas de Ingredientes Ativos por Unidade da Federação",
+       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
+       caption = "IBAMA 2020 | Figura: @maxwelco") +
+  theme(legend.position = "bottom") +
+  ggsave("fig2.png")
+```
+
+
+
+
+
+
+
