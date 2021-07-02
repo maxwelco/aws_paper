@@ -322,6 +322,7 @@ readxl::read_excel("dados_ibama_aldo.xlsx") %>%
 
 ```{r}
 perc_increase %>% 
+  filter(ingrediente_ativo != "cletodim") %>% 
   ggplot(aes(x = year, y = perc, 
              color = ingrediente_ativo,
              group = ingrediente_ativo)) +
