@@ -13,6 +13,7 @@ library(tidyverse)
 library(pdftools)
 library(ggthemes)
 library(ggtext)
+library(ggtext)
 ```
 
 ```{r}
@@ -87,8 +88,9 @@ vendas_1 %>%
 # (×1000)
 (
 vendas_3 %>% 
-  dplyr::select(year, total, herbicida) %>% 
-  ggplot(aes(x = year, y = herbicida * 1000)) +
+  pivot_longer(cols = c(3:6), names_to = "type", values_to = "value")  %>% 
+#  dplyr::select(year, total, herbicida) %>% 
+  ggplot(aes(x = year, y = value / 1000, color = type)) +
   geom_point() +
   geom_line() +
   scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
@@ -99,13 +101,13 @@ vendas_3 %>%
        title = "O mercado de herbicidas no Brasil",
        subtitle = "As vendas de herbicidas no Brasil aumentaram significantemente após a introdução da tecnologia Roundup <br>Ready em 2002",
        caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
-  geom_segment(aes(x = 2002, y = 500000000, 
-                   xend = 2002, yend = 1500000000), color = "tomato") +
-  geom_curve(x = 2002.3, y = 800000000, xend = 2005, yend = 800000000,
-               arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = 0.3, color = "tomato") + 
-  annotate("text", x = 2011, y = 1000000000, 
-           label = "Introdução da tecnologia\n Roundup Ready",) +
+#  geom_segment(aes(x = 2002, y = 5, 
+#                   xend = 2002, yend = 1.5), color = "tomato") +
+#  geom_curve(x = 2002.3, y = 8, xend = 2005, yend = 8,
+#               arrow = arrow(length = unit(0.07, "inch")), 
+#               size = 0.4, curvature = 0.3, color = "tomato") + 
+#  annotate("text", x = 2011, y = 1, 
+#           label = "Introdução da tecnologia\n Roundup Ready",) +
   theme_fivethirtyeight() +
   theme(plot.title.position = "plot",
         plot.subtitle = element_markdown(size = 10))
@@ -137,33 +139,47 @@ read_csv("crop_harvest.csv") %>%
 
 
 ```{r}
-(
 vendas_3 %>% 
   left_join(area_br, by = "year") %>% 
-  mutate(rate_herb = (herbicida * 1000) / area) %>% 
-  ggplot(aes(x = year, y = rate_herb)) +
+  pivot_longer(cols = c(3:6), names_to = "type", values_to = "value")  %>%
+  mutate(rate_herb = (value * 1000) / area) %>% 
+  ggplot(aes(x = year, y = rate_herb, color = type)) +
   geom_point() +
   geom_line() +
-  scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
+  scale_y_continuous(limits = c(0, 60), labels = scales::dollar_format(prefix = "US$ ", 
                                                     big.mark = ",",
                                                     decimal.mark = ".")) +
   labs(y = "Vendas de herbicidas",
        x = NULL,
-       title = "O mercado de herbicidas no Brasil",
-       subtitle = "Vendas de herbicidas por ha",
+       title = "O mercado de <b style='color:red;'>herbicidas</b> no Brasil",
+       subtitle = "Vendas de <b style='color:red;'>herbicidas</b> em billion US$ por ha",
        caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
-  geom_smooth(method = "lm") +
-#  geom_segment(aes(x = 2002, y = 500000000, 
-#                   xend = 2002, yend = 1500000000), color = "tomato") +
-#  geom_curve(x = 2002.3, y = 800000000, xend = 2005, yend = 800000000,
-#               arrow = arrow(length = unit(0.07, "inch")), 
-#               size = 0.4, curvature = 0.3, color = "tomato") + 
-#  annotate("text", x = 2011, y = 1000000000, 
-#           label = "Introdução da tecnologia\n Roundup Ready",) +
+  scale_color_manual(values = c("grey80", "grey80", "red", "grey80")) +
+  geom_curve(x = 2013, y = 55, 
+                   xend = 2011, yend = 57,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "grey80") + 
+  annotate("text", x = 2009, y = 57, #fontface = NULL,
+           label = "Inseticida", size = 3, color = "grey80") +
+  geom_curve(x = 2007, y = 18, 
+                   xend = 2009, yend = 15,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "grey80") + 
+  annotate("text", x = 2011, y = 15.5, #fontface = NULL,
+           label = "Fungicida", size = 3, color = "grey80") +
+  geom_curve(x = 2011, y = 1.5, 
+                   xend = 2013, yend = 5,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "grey80") + 
+  annotate("text", x = 2015, y = 5, #fontface = NULL,
+           label = "Acaricida", size = 3, color = "grey80") +
   theme_fivethirtyeight() +
   theme(plot.title.position = "plot",
+        legend.position = "none",
+        plot.title = element_markdown(),
         plot.subtitle = element_markdown(size = 10))
-)
+
+
 ggsave("vendas_rate.png")
 ```
 
@@ -322,7 +338,7 @@ readxl::read_excel("dados_ibama_aldo.xlsx") %>%
 
 ```{r}
 perc_increase %>% 
-  filter(ingrediente_ativo != "cletodim") %>% 
+  filter(year %in% c(2011, 2019)) %>% 
   ggplot(aes(x = year, y = perc, 
              color = ingrediente_ativo,
              group = ingrediente_ativo)) +
@@ -331,6 +347,31 @@ perc_increase %>%
   theme(legend.position = "bottom")
 ```
 
+```{r}
+perc_increase %>% 
+  filter(year %in% c(2019)) %>% 
+  mutate(area_tratada_em_2019 = area_tratada_em_2019/1000) %>% 
+  ggplot(aes(x = fct_reorder(ingrediente_ativo, perc), y = perc)) +
+  geom_point(aes(size = area_tratada_em_2019, 
+             color = ingrediente_ativo)) +
+  geom_segment(aes(x= ingrediente_ativo, xend= ingrediente_ativo, 
+                   y=0, yend=perc, color = ingrediente_ativo), size = 1.2,
+                show.legend = FALSE) +
+  coord_flip() +
+  scale_color_viridis_d(option = "H") +
+  scale_size_continuous(breaks = c(5, 10, 25, 50, 100)) +
+  labs(x = NULL, y = "% increased from 2010",
+       title = "Aumento de uso de herbididas desde 2010",
+       size = "Treated ha in 2019 (Million)") +
+  theme_fivethirtyeight() +
+  theme(#legend.position = "bottom",
+        plot.title.position = "plot") + 
+  guides(
+  color = FALSE) 
+
+
+ggsave("aumento.png")
+```
 
 
 
