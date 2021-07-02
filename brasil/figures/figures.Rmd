@@ -69,6 +69,7 @@ vendas_2 <- raw_pdf[[2]] %>%
   ) 
 ```
 
+
 ```{r}
 # vendas no valor de US$ 10000
 vendas_1 %>% 

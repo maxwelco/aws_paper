@@ -188,3 +188,13 @@ sindveg_pest %>%
   labs(y = "Ingrediente ativo (kg/ha)",x = NULL) +
   theme_linedraw()
 ```
+
+
+
+
+
+
+
+
+
+
