@@ -152,7 +152,7 @@ vendas_3 %>%
   labs(y = "Vendas de herbicidas",
        x = NULL,
        title = "O mercado de <b style='color:red;'>herbicidas</b> no Brasil",
-       subtitle = "Vendas de <b style='color:red;'>herbicidas</b> em billion US$ por ha",
+       subtitle = "Vendas de <b style='color:red;'>herbicidas</b> em US$ por ha",
        caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
   scale_color_manual(values = c("grey80", "grey80", "red", "grey80")) +
   geom_curve(x = 2013, y = 55, 
@@ -315,9 +315,12 @@ historico2 %>%
        title = "Vendas de ingredientes ativos de pesticidas por unidade da federação",
        subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme(legend.position = "bottom") +
-  ggsave("fig.png")
+  theme(legend.position = "bottom") 
+
+ggsave("fig.png")
 ```
+
+
 <!-- Figura 2 - Aldo -->
 
 ```{r}
@@ -443,7 +446,8 @@ data1 %>%
        title = "Vendas de Ingredientes Ativos por Unidade da Federação",
        subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom")
+
   ggsave("fig2.png")
 ```
 
@@ -454,12 +458,25 @@ data1 %>%
 ```{r}
 readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
   mutate(perc = perc / 100,
-         total_ha_soa = total_ha * perc) 
+         total_ha_soa = total_ha * perc) %>% 
+  ggplot(aes(x = season, y = perc, fill = herbicide)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_viridis_d(option = "H") +
+  coord_flip()
+```
+
+```{r}
+library(microshades)
 ```
 
 
-
-
-
-
+```{r}
+readxl::read_excel("spark_1.xlsx", sheet = "spark_2") %>% 
+  mutate(perc = perc / 100,
+         total_ha_soa = total_ha * perc) %>% 
+  ggplot(aes(x = year_season, y = perc, fill = soa)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~ crop) +
+  scale_fill_viridis_d(option = "H") 
+```
 
