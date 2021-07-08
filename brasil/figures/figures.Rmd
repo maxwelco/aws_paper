@@ -312,9 +312,6 @@ mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>%
   unchop(everything())
 ```
 
-```{r}
-area_fao
-```
 
 
 ```{r}
@@ -377,6 +374,7 @@ perc_increase %>%
 ```{r}
 perc_increase %>% 
   filter(year %in% c(2019)) %>% 
+  filter(ingrediente_ativo != "cletodim") %>% 
   mutate(area_tratada_em_2019 = area_tratada_em_2019/1000) %>% 
   ggplot(aes(x = fct_reorder(ingrediente_ativo, perc), y = perc)) +
   geom_point(aes(size = area_tratada_em_2019, 
@@ -391,7 +389,6 @@ perc_increase %>%
        title = "Aumento de uso de herbididas desde 2010",
        subtitle = "% increased from 2010",
        size = "Treated ha in 2019 (Million)") +
-  theme_fivethirtyeight() +
   theme(#legend.position = "bottom",
         plot.title.position = "plot") + 
   guides(
@@ -399,6 +396,22 @@ perc_increase %>%
 
 
 ggsave("aumento.png")
+```
+
+
+```{r}
+perc_increase %>% 
+#  filter( %in% c(2019)) %>% 
+  mutate(area_tratada_em_2019 = area_tratada_em_2019/1000) %>% 
+  ggplot(aes(x = year, y = perc)) +
+  geom_point(aes(color = ingrediente_ativo)) +
+  facet_wrap(~ ingrediente_ativo, scales = "free") +
+  scale_color_viridis_d(option = "H") +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none",
+        plot.title.position = "plot") 
+
+ggsave("aumento1.png")
 ```
 
 
@@ -513,12 +526,13 @@ readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>%
 
 ```{r}
 soa_total %>% 
-  ggplot(aes(x = season, y = perc, fill = herbicide)) +
+  ggplot(aes(x = season, y = perc, fill = herbicide, label = perc)) +
   geom_bar(stat = "identity", position = "fill") +
   scale_fill_viridis_d(option = "H") +
   coord_flip() +
-  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
-            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
+  geom_text() +
+#  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
+#            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
   labs(x = NULL,
        y = NULL,
        fill = NULL) +
