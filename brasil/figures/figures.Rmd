@@ -137,6 +137,24 @@ read_csv("crop_harvest.csv") %>%
   theme(legend.position = "none")
 ```
 
+# IBGE
+
+```{r}
+readxl::read_excel("area_colhida.xlsx") %>% 
+  janitor::row_to_names(row_number = 3) %>% 
+  janitor::clean_names() %>% 
+  drop_na() %>% 
+  pivot_longer(cols = c("x1974":"x2019"), names_to = "year", values_to = "harvest_ha") %>% 
+  rename(location = na) %>% 
+  mutate(year = str_remove_all(year, "x")) %>% 
+  mutate_at(c("year", "harvest_ha"), as.double)
+```
+
+
+
+
+
+
 
 ```{r}
 vendas_3 %>% 
@@ -149,9 +167,9 @@ vendas_3 %>%
   scale_y_continuous(limits = c(0, 60), labels = scales::dollar_format(prefix = "US$ ", 
                                                     big.mark = ",",
                                                     decimal.mark = ".")) +
-  labs(y = "Vendas de herbicidas",
+  labs(y = NULL,
        x = NULL,
-       title = "O mercado de <b style='color:red;'>herbicidas</b> no Brasil",
+       title = "O mercado de pesticidas no Brasil",
        subtitle = "Vendas de <b style='color:red;'>herbicidas</b> em US$ por ha",
        caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
   scale_color_manual(values = c("grey80", "grey80", "red", "grey80")) +
@@ -173,7 +191,7 @@ vendas_3 %>%
                size = 0.4, curvature = -0.3, color = "grey80") + 
   annotate("text", x = 2015, y = 5, #fontface = NULL,
            label = "Acaricida", size = 3, color = "grey80") +
-  theme_fivethirtyeight() +
+  theme_hc() +
   theme(plot.title.position = "plot",
         legend.position = "none",
         plot.title = element_markdown(),
@@ -428,25 +446,38 @@ data1 <- data %>%
                                           "glifosato" = "glifosato e seus sais"))
 ```
 
+```{r}
+data1 %>% distinct(ingrediente_ativo) %>% 
+  filter(ingrediente_ativo %in% c("2,4-d", "alacloro", "ametrina", "atrazina",
+                                  "bentazona", "clorimurom-etílico", 
+                                  "dicloreto de paraquate", "diurom",
+                                  "endosulfam", "glifosato", "hexazinona",
+                                  "imazaquim", "imazetapir", "lactofem",
+                                  "metsulfurom-metílico", "msma", "nicosulfurom"))
+```
 
 
 
 ```{r}
 data1 %>% 
-  filter(ingrediente_ativo %in% c("atrazina", "2,4-d", "glifosato", "dicloreto de paraquate")) %>% 
-  filter(state %in% c("pr", "rs", "mt", "ma")) %>% 
-  ggplot(aes(x = year, y = ton, color = ingrediente_ativo)) +
+  filter(vendas_totais < 200000) %>% 
+  mutate(ing_ativo = as.character(ingrediente_ativo),
+         highlight = ifelse(ing_ativo %in% "glifosato", TRUE, FALSE),
+         variable = if_else(highlight == TRUE, ing_ativo, "NA")) %>% 
+  ggplot(aes(x = year, y = vendas_totais, 
+             color = variable, group = ingrediente_ativo)) +
   geom_line() +
   geom_point() +
-  facet_grid(~ state) + 
-#  geom_label() +
+  scale_color_manual(values = c("tomato", "gray70")) +
+  annotate("text", x = 2018, y = 175000, label = "Glyphosate", color = "tomato") +
   scale_x_continuous(
     label = scales::number_format(accuracy = 1)) +
   labs(x = "", y ="",
        title = "Vendas de Ingredientes Ativos por Unidade da Federação",
        subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme(legend.position = "bottom")
+  theme_hc() +
+  theme(legend.position = "none")
 
   ggsave("fig2.png")
 ```
@@ -456,27 +487,67 @@ data1 %>%
 
 
 ```{r}
+(readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
+  mutate(perc = perc / 100,
+         total_ha_soa = total_ha * perc) %>% 
+#  group_by(season) %>% 
+  distinct(total_ha) -> total_ha)
+```
+
+
+```{r}
 readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
+  mutate(mi_ha = round(total_ha / 1000000,1)) %>% 
+  mutate(mi_ha = str_glue("{mi_ha} mi ha")) -> soa_total
+```
+
+
+```{r}
+soa_total %>% 
   ggplot(aes(x = season, y = perc, fill = herbicide)) +
   geom_bar(stat = "identity", position = "fill") +
   scale_fill_viridis_d(option = "H") +
-  coord_flip()
+  coord_flip() +
+  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
+            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
+  labs(x = NULL,
+       y = NULL,
+       fill = NULL) +
+  theme_hc()
+
+ggsave("soa_use.png")
 ```
 
 ```{r}
 library(microshades)
 ```
 
-
 ```{r}
 readxl::read_excel("spark_1.xlsx", sheet = "spark_2") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
+  mutate(crop = str_to_title(crop)) %>% 
+  mutate(mi_ha = round(total_ha_soa / 1000000, 1),
+         mi_ha = str_glue("{mi_ha} mi ha")) -> soa_crop
+```
+
+
+```{r}
+soa_crop %>% 
   ggplot(aes(x = year_season, y = perc, fill = soa)) +
   geom_bar(stat = "identity", position = "fill") +
   facet_grid(~ crop) +
-  scale_fill_viridis_d(option = "H") 
+  labs(x = NULL,
+       y = NULL,
+       fill = NULL) +
+  scale_fill_viridis_d(option = "H") +
+  geom_text(soa_crop %>% filter(soa == "EPSPs"),
+            mapping = aes(label = mi_ha), y = 0.5, 
+            angle = 90, color = "gray75") +
+  theme_hc()
+
+ggsave("soa_crop.png")
 ```
 
