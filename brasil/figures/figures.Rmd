@@ -207,7 +207,7 @@ ggsave("vendas_rate.png")
 <!-- Figura 1B -->
 
 ```{r}
-read_csv("../fao/herbicide_fao.csv") %>% 
+read_csv("../fao/herbicide_fao.csv")  %>% 
   ggplot(aes(x = Year, y = Value)) +
   geom_smooth(method = "lm") +
   geom_point() +
@@ -219,7 +219,7 @@ read_csv("../fao/herbicide_fao.csv") %>%
    
 
 ```{r}
-read_csv("../fao/herbicide_fao.csv") %>% 
+read_csv("../fao/herbicide_fao.csv")  %>% 
   janitor::clean_names() %>% 
   left_join(area_br, by = "year") %>%
   mutate(rate_herb = (value * 1000) / area.y) %>% 
@@ -312,28 +312,34 @@ mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>%
   unchop(everything())
 ```
 
+```{r}
+area_fao
+```
 
 
 ```{r}
 historico2 %>% 
-  drop_na() %>% 
-  filter(!location %in% c("NORTE", "CENTRO-OESTE", "NORDESTE", "SUDESTE", "SUL", "BRASIL",
-                          "Total", "SEM DEFINIÇÃO")) %>% 
-  mutate(highlight = if_else(location %in% c("MT", "PR", "RS", "SP"), TRUE, FALSE),
-         variable = if_else(highlight == TRUE, location, "NA")) %>% 
-  ggplot(aes(x = year, y = qtde, color = variable, 
-             group = location, label = location)) +
+  filter(location %in% "Total") %>% 
+  left_join(area_br, by = c("year")) %>% 
+  mutate(rate = (qtde * 1000)/area) %>% 
+#  drop_na() %>% 
+#  filter(!location %in% c("NORTE", "CENTRO-OESTE", "NORDESTE", 
+#                          "SUDESTE", "SUL", "BRASIL",
+#                          "Total", "SEM DEFINIÇÃO")) %>% 
+#  mutate(highlight = if_else(location %in% c("MT", "PR", "RS", "SP"), TRUE, FALSE),
+#         variable = if_else(highlight == TRUE, location, "NA")) %>% 
+  ggplot(aes(x = year, y = rate)) +
   geom_line() +
   geom_point() +
 #  geom_label() + 
-  scale_color_manual(values = c("red", "gray80",  "blue", "darkgreen", "black")) +
+#  scale_color_manual(values = c("red", "gray80",  "blue", "darkgreen", "black")) +
   scale_x_continuous(
     label = scales::number_format(accuracy = 1)) +
   labs(x = "", y ="",
-       title = "Vendas de ingredientes ativos de pesticidas por unidade da federação",
-       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
+       title = "Vendas de ingredientes ativo de pesticidas por area",
+       subtitle = "Unidade de medida em kg de ingrediente ativo por ha",
        caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme(legend.position = "bottom") 
+  theme_hc() 
 
 ggsave("fig.png")
 ```
@@ -383,6 +389,7 @@ perc_increase %>%
   scale_size_continuous(breaks = c(5, 10, 25, 50, 100)) +
   labs(x = NULL, y = "% increased from 2010",
        title = "Aumento de uso de herbididas desde 2010",
+       subtitle = "% increased from 2010",
        size = "Treated ha in 2019 (Million)") +
   theme_fivethirtyeight() +
   theme(#legend.position = "bottom",
