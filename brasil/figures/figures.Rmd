@@ -579,44 +579,9 @@ data1 <- data %>%
                                           "glifosato" = "glifosato e seus sais"))
 ```
 
-```{r}
-data1 %>% distinct(ingrediente_ativo) %>% 
-  filter(ingrediente_ativo %in% c("2,4-d", "alacloro", "ametrina", "atrazina",
-                                  "bentazona", "clorimurom-etílico", 
-                                  "dicloreto de paraquate", "diurom",
-                                  "endosulfam", "glifosato", "hexazinona",
-                                  "imazaquim", "imazetapir", "lactofem",
-                                  "metsulfurom-metílico", "msma", "nicosulfurom"))
-```
 
 
-
-```{r}
-data1 %>% 
-  filter(vendas_totais < 200000) %>% 
-  mutate(ing_ativo = as.character(ingrediente_ativo),
-         highlight = ifelse(ing_ativo %in% "glifosato", TRUE, FALSE),
-         variable = if_else(highlight == TRUE, ing_ativo, "NA")) %>% 
-  ggplot(aes(x = year, y = vendas_totais, 
-             color = variable, group = ingrediente_ativo)) +
-  geom_line() +
-  geom_point() +
-  scale_color_manual(values = c("tomato", "gray70")) +
-  annotate("text", x = 2018, y = 175000, label = "Glyphosate", color = "tomato") +
-  scale_x_continuous(
-    label = scales::number_format(accuracy = 1)) +
-  labs(x = "", y ="",
-       title = "Vendas de Ingredientes Ativos por Unidade da Federação",
-       subtitle = "Unidade de medida = toneladas de ingrediente ativo (IA)",
-       caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme_hc() +
-  theme(legend.position = "none")
-
-  ggsave("fig2.png")
-```
-
-
-<!-- Figura 4 - Spark -->
+<!-- Figura 3 - Spark -->
 
 
 ```{r}
@@ -633,29 +598,57 @@ readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>%
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
   mutate(mi_ha = round(total_ha / 1000000,1)) %>% 
-  mutate(mi_ha = str_glue("{mi_ha} mi ha")) -> soa_total
+  mutate(mi_ha = str_glue("{mi_ha} mi ha")) %>% 
+  mutate(herbicide = case_when(
+    perc == "0.074" & year == "2015" ~ "FSI",
+    TRUE ~ herbicide 
+  )) -> soa_total
 ```
 
 
 ```{r}
+theme_set(theme_bw(base_family = "roboto"))
 soa_total %>% 
-  ggplot(aes(x = season, y = perc, fill = herbicide, label = perc)) +
-  geom_bar(stat = "identity", position = "fill") +
+  ggplot(aes(x = fct_reorder(herbicide, perc), y = perc, 
+             label = perc, fill = herbicide)) +
+  geom_bar(stat = "identity") +
   scale_fill_viridis_d(option = "H") +
   coord_flip() +
-  geom_text() +
+  facet_grid(~ season) +
+#  geom_text() +
 #  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
 #            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
   labs(x = NULL,
        y = NULL,
        fill = NULL) +
-  theme_hc()
+  theme(legend.position = "none")
+
 
 ggsave("soa_use.png")
 ```
 
+
 ```{r}
-library(microshades)
+theme_set(theme_bw(base_family = "roboto"))
+(
+soa_total %>% 
+  mutate(percent = scales::percent(perc, accuracy = .1, trim = FALSE)) %>% 
+  ggplot(aes(x = season, y = herbicide, 
+             label = percent, fill = perc)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "D") +
+#  coord_flip() +
+#  facet_grid(~ season) +
+   geom_text(color = "gray1") +
+#  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
+#            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
+  labs(x = NULL,
+       y = NULL,
+       fill = NULL) +
+  theme(legend.position = "none")
+)
+
+ggsave("soa_use.png", width = 5)
 ```
 
 ```{r}
@@ -680,6 +673,38 @@ soa_crop %>%
   geom_text(soa_crop %>% filter(soa == "EPSPs"),
             mapping = aes(label = mi_ha), y = 0.5, 
             angle = 90, color = "gray75") +
+  theme_hc()
+
+ggsave("soa_crop.png")
+```
+
+```{r}
+library(ggwaffle)
+```
+
+```{r}
+soa_crop$x <- rep(1:10, 10)
+soa_crop$y <- rep(1:10,rep(10,10))
+```
+
+
+```{r}
+soa_crop %>% 
+  ggplot() +
+  facet_wrap(~crop, nrow = 1, strip.position = "bottom") +
+  geom_waffle(
+    aes(values = perc/10, fill = soa),
+    n_rows = 4, size = .45, colour = "#dee3e3", flip = T, show.legend = F) 
+  coord_equal() + 
+  facet_grid(~ soa) +
+  coord_fixed()
+  labs(x = NULL,
+       y = NULL,
+       fill = NULL) +
+  scale_fill_viridis_d(option = "H") +
+#  geom_text(soa_crop %>% filter(soa == "EPSPs"),
+#            mapping = aes(label = mi_ha), y = 0.5, 
+#            angle = 90, color = "gray75") +
   theme_hc()
 
 ggsave("soa_crop.png")
