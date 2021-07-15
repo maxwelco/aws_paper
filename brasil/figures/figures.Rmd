@@ -93,7 +93,7 @@ vendas_1 %>%
 
 
 
-```{r}
+```{r eval = FALSE}
 # (×1000)
 (
 vendas_3 %>% 
@@ -392,7 +392,7 @@ ai_rate %>%
   annotate("text", x = 2010, y = 0.1, 
            label = "Other pesticides: fungicide, insecticide and acaricide", 
            color = "#4B0082", size = 3) +
-  labs(y = expression(paste("Pesticide use (kg ai ha "^"-1",")")),
+  labs(y = expression(paste("Pesticide sales (kg ai ha "^"-1",")")),
        x = NULL, color = NULL, fill = NULL) +
   theme(legend.position = "none") -> herb
 
@@ -406,7 +406,7 @@ ggsave("rate1.png")
 library(patchwork)
 sales | herb
 
-ggsave("Figure 1.png", width = 10, height = 5)
+ggsave("figure/Figure 1.png", width = 10, height = 5)
 ```
 
 
@@ -524,7 +524,7 @@ perc_increase %>%
         plot.title.position = "plot",
         strip.text = element_markdown(face="bold"))
 
-ggsave("Figure 2.png", height = 12, width = 8)
+ggsave("figure/Figure 2.png", height = 12, width = 9)
 ```
 
 
@@ -624,7 +624,7 @@ soa_total %>%
   theme(legend.position = "none")
 
 
-ggsave("soa_use.png")
+ggsave("figure/soa_use.png")
 ```
 
 
@@ -636,7 +636,7 @@ soa_total %>%
   ggplot(aes(x = season, y = herbicide, 
              label = percent, fill = perc)) +
   geom_tile() +
-  scale_fill_viridis_c(option = "D") +
+  scale_fill_viridis_b(option = "C") +
 #  coord_flip() +
 #  facet_grid(~ season) +
    geom_text(color = "gray1") +
@@ -648,7 +648,7 @@ soa_total %>%
   theme(legend.position = "none")
 )
 
-ggsave("soa_use.png", width = 5)
+ggsave("figure/soa_use.png", width = 5)
 ```
 
 ```{r}
@@ -675,38 +675,36 @@ soa_crop %>%
             angle = 90, color = "gray75") +
   theme_hc()
 
-ggsave("soa_crop.png")
+ggsave("figure/soa_crop.png")
 ```
 
 ```{r}
-library(ggwaffle)
+library(ggstream)
 ```
-
-```{r}
-soa_crop$x <- rep(1:10, 10)
-soa_crop$y <- rep(1:10,rep(10,10))
-```
-
 
 ```{r}
 soa_crop %>% 
-  ggplot() +
-  facet_wrap(~crop, nrow = 1, strip.position = "bottom") +
-  geom_waffle(
-    aes(values = perc/10, fill = soa),
-    n_rows = 4, size = .45, colour = "#dee3e3", flip = T, show.legend = F) 
-  coord_equal() + 
-  facet_grid(~ soa) +
-  coord_fixed()
-  labs(x = NULL,
-       y = NULL,
-       fill = NULL) +
-  scale_fill_viridis_d(option = "H") +
-#  geom_text(soa_crop %>% filter(soa == "EPSPs"),
-#            mapping = aes(label = mi_ha), y = 0.5, 
-#            angle = 90, color = "gray75") +
-  theme_hc()
-
-ggsave("soa_crop.png")
+  ggplot(aes(x = year, y = total_ha, fill = soa)) +
+  geom_density2d(position = "fill") +
+  facet_grid(~crop)
 ```
+
+
+```{r}
+dt %>% 
+  ggplot(aes(x = year, y = n, fill = soa)) +
+  geom_stream(type = "mirror") +
+  geom_stream_label(aes(label = soa))
+```
+
+```{r}
+#remotes::install_github("hafen/geofacet")
+library(geofacet)
+```
+
+
+
+
+
+
 
