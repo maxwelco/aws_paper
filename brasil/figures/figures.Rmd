@@ -597,6 +597,7 @@ data1 <- data %>%
 readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
+  mutate(herbicide = str_replace_all(herbicide, "Ohters", "Others")) %>% 
   mutate(mi_ha = round(total_ha / 1000000,1)) %>% 
   mutate(mi_ha = str_glue("{mi_ha} mi ha")) %>% 
   mutate(herbicide = case_when(
@@ -630,8 +631,13 @@ ggsave("figure/soa_use.png")
 
 ```{r}
 theme_set(theme_bw(base_family = "roboto"))
-(
+
 soa_total %>% 
+  mutate(herbicide = fct_relevel(herbicide,
+                                 levels = c("Others", "Glutamina", 
+                                            "DPX", "HPPD", "PPO",
+                                            "FSI", "ACCase", "ALS",
+                                            "FSII", "Auxinas", "EPSPs"))) %>% 
   mutate(percent = scales::percent(perc, accuracy = .1, trim = FALSE)) %>% 
   ggplot(aes(x = season, y = herbicide, 
              label = percent, fill = perc)) +
@@ -646,17 +652,59 @@ soa_total %>%
        y = NULL,
        fill = NULL) +
   theme(legend.position = "none")
-)
+
 
 ggsave("figure/soa_use.png", width = 5)
 ```
+
+
+```{r}
+library(ggbump)
+library(cowplot)
+library(fishualize)
+```
+
+```{r}
+soa_total %>% 
+  group_by(year) %>% 
+  arrange(desc(total_ha_soa)) %>% 
+  mutate(rank = row_number()) -> soa_total1
+
+soa_total1 %>% 
+  ggplot(aes(x = year, y = rank, color = herbicide,
+             label = herbicide)) +
+  geom_text(data = soa_total1 %>% filter(year == 2020),
+            mapping = aes(x = year + .3, label = herbicide), 
+            size = 5, hjust = 0) +
+  geom_text(data = soa_total1 %>% filter(year == 2015),
+            mapping = aes(x = year - 1.45, label = herbicide), 
+            size = 5, hjust = 0) +
+  geom_point(size = 7) +
+  geom_bump(size = 2, smooth = 8) +
+  geom_text(data = soa_total1,
+            mapping = aes(label = perc*100), 
+            size = 3, color = 1) +
+  scale_x_continuous(limits = c(2013.55, 2021.5),
+                     breaks = seq(2015, 2020, 1)) +
+  theme_minimal_grid(font_size = 14, line_size = 0) +
+  scale_y_reverse(breaks = seq(0, 12, 1)) +
+#  scale_colour_viridis_d(option = "F") +
+  scale_fill_fish_d(option = "Scarus_quoyi") +
+  labs(x = NULL) +
+  theme(legend.position = "none")
+
+ggsave("figure/soa_use1.png", bg = "beige")
+```
+
+
+
 
 ```{r}
 readxl::read_excel("spark_1.xlsx", sheet = "spark_2") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
   mutate(crop = str_to_title(crop)) %>% 
-  mutate(mi_ha = round(total_ha_soa / 1000000, 1),
+  mutate(mi_ha = round(total_ha_soa / 1000000, 5),
          mi_ha = str_glue("{mi_ha} mi ha")) -> soa_crop
 ```
 
@@ -679,32 +727,29 @@ ggsave("figure/soa_crop.png")
 ```
 
 ```{r}
-library(ggstream)
+options(scipen=999)
+soa_crop %>%  
+  filter(crop == "Soybean") %>% 
+  ggplot(aes(x = year, y = total_ha_soa, fill = soa)) +
+  geom_area(position = "fill") +
+  facet_grid(~ crop) +
+#  coord_flip() +
+  labs(x = NULL,
+       y = NULL,
+       fill = NULL) +
+  scale_fill_viridis_d(option = "H", guide = guide_legend(nrow = 2)) +
+  scale_x_continuous(breaks = c(2018, 2019, 2020)) +
+  theme_hc() +
+  theme(axis.text = element_markdown(angle = 0))
+
+ggsave("figure/soa_crop1.png", width = 4, height = 4)
 ```
+
+
+
 
 ```{r}
 soa_crop %>% 
-  ggplot(aes(x = year, y = total_ha, fill = soa)) +
-  geom_density2d(position = "fill") +
-  facet_grid(~crop)
+  filter(crop == "Corn")
 ```
-
-
-```{r}
-dt %>% 
-  ggplot(aes(x = year, y = n, fill = soa)) +
-  geom_stream(type = "mirror") +
-  geom_stream_label(aes(label = soa))
-```
-
-```{r}
-#remotes::install_github("hafen/geofacet")
-library(geofacet)
-```
-
-
-
-
-
-
 

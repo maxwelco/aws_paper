@@ -176,9 +176,13 @@ final_resistance_data %>%
                              "ecuador", "venezuela")) %>% 
   dplyr::select(-country_name, -id) %>% 
   count(country) %>% 
-  bind_rows(peru) -> sa_wr
+  bind_rows(peru) %>% 
+  arrange(desc(n)) -> sa_wr
 ```
 
+```{r}
+
+```
 
 
 ```{r}
@@ -215,6 +219,20 @@ library(ggrepel)
 ggplot(data = dt) +
   geom_sf() +
   geom_sf(aes(fill = n)) +
+  coord_sf(xlim = c(-90, -30), ylim = c(-60, 17), expand = FALSE) +
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        legend.position = c(0.80, 0.95),
+        legend.background = element_rect(fill = NA),
+        legend.direction = "horizontal",
+        legend.title = element_markdown(face = "bold"),
+        legend.key.width = unit(2,"line")) +
+  guides(fill = guide_colourbar(title.position="top",
+                                title.hjust = 0.5)) -> map1
+```
+
+
+```{r}
+map1 +
   geom_text_repel(data= world_points,aes(x=X, y=Y, label=name),
             size = 4.5, fill = "white", seed = 165,
             color = "white", fontface = "bold", 
@@ -229,82 +247,20 @@ ggplot(data = dt) +
                          which_north = "true",
                          pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"), 
                          style = north_arrow_fancy_orienteering) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 54)) +
-  annotate("text", x = -55, y = -15, hjust = 0,
-                 label = "Brazil has the most \ncases of herbicide \nresistant weeds (n=54)") +
-  geom_richtext(x = -58, y = -42, 
-                hjust = 0,
+  scale_fill_viridis_c(option = "C", limits = c(0, 54)) -> map2
+```
+
+
+```{r}
+map2 + 
+  geom_richtext(x = -60, y = -42, 
+                hjust = 0, size = 4,
                 fill = NA, label.color = NA,
-                label = "**Argentina** is second with<br> 39 cases of herbicide <br>resistant weeds") +
-  coord_sf(xlim = c(-90, -30), ylim = c(-60, 17), expand = FALSE) +
-  theme(panel.background = element_rect(fill = "aliceblue"),
-        legend.position = c(0.80, 0.95),
-        legend.background = element_rect(fill = NA),
-        legend.direction = "horizontal",
-        legend.title = element_markdown(face = "bold"),
-        legend.key.width = unit(2,"line")) +
-  guides(fill = guide_colourbar(title.position="top",
-                                title.hjust = 0.5))
+                label = glue::glue("**Brazil** has the most cases of herbicide<br> resistant weeds (n={sa_wr$n[1]}), followed by <br>**Argentina** (n={sa_wr$n[2]}), **Chile** (n={sa_wr$n[3]}), <br>**Colombia** (n={sa_wr$n[4]}), **Venezuela** (n={sa_wr$n[5]}), <br>**Bolivia** (n={sa_wr$n[6]}), Paraguay (n={sa_wr$n[7]}), <br>**Uruguay** (n={sa_wr$n[8]}), and **Ecuardor** (n={sa_wr$n[9]}).<br> No herbicide resistant weeds have been reported in **Peru**.")) 
+ 
 
 ggsave("map.png", width = 9, height = 9)
 ```
-
-
-
-```{r}
-ggplot(data = world) + 
-  geom_sf(fill= "antiquewhite") + 
-  geom_text(data= world_points, aes(x=X, y=Y, label=name), 
-            color = "darkblue", fontface = "bold", check_overlap = FALSE) + 
-  annotate(geom = "text", x = -90, y = 26, label = "Gulf of Mexico", fontface = "italic", 
-           color = "grey22", size = 6) + 
-  annotation_scale(location = "bl", width_hint = 0.5) + 
-  annotation_north_arrow(location = "bl", which_north = "true", 
-                         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"), 
-                         style = north_arrow_fancy_orienteering) + 
-  coord_sf(xlim = c(-102.15, -74.12), ylim = c(7.65, 33.97), expand = FALSE) + 
-  xlab("Longitude") + 
-  ylab("Latitude") + 
-  ggtitle("Map of the Gulf of Mexico and the Caribbean Sea") + 
-  theme(panel.grid.major = element_line(
-    color = gray(.5), 
-    linetype = "dashed", size = 0.5),
-    panel.background = element_rect(fill = "aliceblue"))
-```
-
-
-
-```{r}
-library(ggspatial)
-ggplot(data = world) +
-    geom_sf(fill = "antiquewhite1") +
-    geom_sf(data = counties, aes(fill = area)) +
-    geom_sf(data = states, fill = NA) + 
-    geom_sf(data = sites, size = 4, shape = 23, fill = "darkred") +
-    geom_sf(data = flcities) +
-    geom_text_repel(data = flcities, aes(x = lng, y = lat, label = city), 
-        fontface = "bold", nudge_x = c(1, -1.5, 2, 2, -1), nudge_y = c(0.25, 
-            -0.25, 0.5, 0.5, -0.5)) +
-    geom_label(data = states, aes(X, Y, label = ID), size = 5, fontface = "bold", 
-        nudge_y = states$nudge_y) +
-    scale_fill_viridis_c(trans = "sqrt", alpha = .4) +
-    annotation_scale(location = "bl", width_hint = 0.4) +
-    annotation_north_arrow(location = "bl", which_north = "true", 
-        pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
-        style = north_arrow_fancy_orienteering) +
-    coord_sf(xlim = c(-88, -78), ylim = c(24.5, 33), expand = FALSE) +
-    xlab("Longitude") + ylab("Latitude") +
-    ggtitle("Observation Sites", subtitle = "(2 sites in Palm Beach County, Florida)") +
-    theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", 
-        size = 0.5), panel.background = element_rect(fill = "aliceblue"))
-```
-
-
-
-
-
-
-
 
 
 
