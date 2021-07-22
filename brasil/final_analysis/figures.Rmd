@@ -14,13 +14,10 @@ library(pdftools)
 library(ggthemes)
 library(ggtext)
 library(ggtext)
-```
-
-```{r}
 library(extrafont)
 library(showtext)
 showtext_auto()
-font_add_google("Roboto", "roboto") 
+font_add_google("Lato", "lato") 
 ```
 
 
@@ -92,44 +89,11 @@ vendas_1 %>%
 
 
 
-
-```{r eval = FALSE}
-# (×1000)
-(
-vendas_3 %>% 
-  pivot_longer(cols = c(3:6), names_to = "type", values_to = "value")  %>% 
-#  dplyr::select(year, total, herbicida) %>% 
-  ggplot(aes(x = year, y = value / 1000, color = type)) +
-  geom_point() +
-  geom_line() +
-  scale_y_continuous(labels = scales::dollar_format(prefix = "US$ ", 
-                                                    big.mark = ",",
-                                                    decimal.mark = ".")) +
-  labs(y = "Vendas de herbicidas",
-       x = NULL,
-       title = "O mercado de herbicidas no Brasil",
-       subtitle = "As vendas de herbicidas no Brasil aumentaram significantemente após a introdução da tecnologia Roundup <br>Ready em 2002",
-       caption = "Fonte: Sindiveg 2018 | Figura: @maxwelco") +
-#  geom_segment(aes(x = 2002, y = 5, 
-#                   xend = 2002, yend = 1.5), color = "tomato") +
-#  geom_curve(x = 2002.3, y = 8, xend = 2005, yend = 8,
-#               arrow = arrow(length = unit(0.07, "inch")), 
-#               size = 0.4, curvature = 0.3, color = "tomato") + 
-#  annotate("text", x = 2011, y = 1, 
-#           label = "Introdução da tecnologia\n Roundup Ready",) +
-  theme_fivethirtyeight() +
-  theme(plot.title.position = "plot",
-        plot.subtitle = element_markdown(size = 10))
-)
-ggsave("vendas.png")
-```
-
-
 Crop harvest - FAO
 
 
 ```{r}
-read_csv("crop_harvest.csv") %>% 
+read_csv("../fao/crop_harvest.csv") %>% 
   janitor::clean_names() %>% 
   filter(!is.na(value)) %>% 
   group_by(year) %>% 
@@ -141,7 +105,7 @@ read_csv("crop_harvest.csv") %>%
 # IBGE
 
 ```{r eval = FALSE}
-readxl::read_excel("area_colhida.xlsx") %>% 
+readxl::read_excel("../IBGE/area_colhida.xlsx") %>% 
   janitor::row_to_names(row_number = 3) %>% 
   janitor::clean_names() %>% 
   drop_na() %>% 
@@ -150,10 +114,6 @@ readxl::read_excel("area_colhida.xlsx") %>%
   mutate(year = str_remove_all(year, "x")) %>% 
   mutate_at(c("year", "harvest_ha"), as.double)
 ```
-
-
-
-
 
 
 
@@ -166,7 +126,7 @@ vendas_3 %>%
 ```
 
 
-```{r eval=FALSE}
+```{r}
 pest_sales %>% 
   filter(type != "pesticide") %>% 
 ggplot(aes(x = year, y = rate_herb, color = type, 
@@ -174,27 +134,28 @@ ggplot(aes(x = year, y = rate_herb, color = type,
   geom_point() +
   geom_line() +
   scale_y_continuous(limits = c(0, 60)) +
-  scale_x_continuous(limits = c(1978, 2020.5), 
+  scale_x_continuous(limits = c(1978, 2020), 
                      breaks = seq(1980, 2020, by = 10)) +
   labs(y = expression(paste("Pesticide sales (US$ ha "^"-1",")")),
        x = NULL) +
-  scale_color_manual(values = c("grey80", "grey80", "#FE4E00", "grey80")) +
-  scale_fill_manual(values = c("grey80", "grey80", "#FE4E00", "grey80")) +
+  scale_color_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+  scale_fill_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
   scale_shape_manual(values = c(1, 1, 16, 1)) +
-  annotate("text", x = 1998, y = 33, fontface = "bold",
+  annotate("text", x = 1998, y = 33, 
+           fontface = "bold", 
            label = "Herbicide", color = "#FE4E00") +
   geom_curve(x = 2013, y = 55, 
                    xend = 2011, yend = 57,
                arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = 0.3, color = "grey80") + 
+               size = 0.4, curvature = 0.3, color = "#e5e5ff") + 
   annotate("text", x = 2008, y = 57, #fontface = NULL,
-           label = "Inseticide", size = 3, color = "grey80") +
+           label = "Inseticide", size = 3, color = "#e5e5ff") +
   geom_curve(x = 2007, y = 18, 
                    xend = 2009, yend = 15,
                arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = 0.3, color = "grey80") + 
+               size = 0.4, curvature = 0.3, color = "#d2f8d2") + 
   annotate("text", x = 2012, y = 15.5, #fontface = NULL,
-           label = "Fungicide", size = 3, color = "grey80") +
+           label = "Fungicide", size = 3, color = "#d2f8d2") +
   geom_curve(x = 2011, y = 1.5, 
                    xend = 2013, yend = 5,
                arrow = arrow(length = unit(0.07, "inch")), 
@@ -202,48 +163,13 @@ ggplot(aes(x = year, y = rate_herb, color = type,
   annotate("text", x = 2016, y = 5, #fontface = NULL,
            label = "Acaricide", size = 3, color = "grey80") +
   geom_smooth(method = "loess", alpha = 0.05) +
-  theme_bw() +
+  theme_bw(base_family = "lato") +
   theme(plot.title.position = "plot",
         legend.position = "none",
         plot.title = element_markdown(),
         plot.subtitle = element_markdown(size = 10)) -> sales
-
-
-#ggsave("vendas_rate.png")
 ```
 
-
-
-```{r}
-theme_set(theme_bw(base_family = "roboto"))
-pest_sales %>% 
-    filter(type %in% c("herbicida", "pesticide")) %>% 
-ggplot(aes(x = year, y = rate_herb, color = type, 
-             fill = type, shape = type)) +
-  geom_point() +
-  geom_line() +
-#  scale_y_continuous(limits = c(0, 60)) +
-  scale_x_continuous(limits = c(1978, 2020), 
-                     breaks = seq(1980, 2020, by = 10)) +
-  labs(y = expression(paste("Pesticide sales (US$ ha "^"-1",")")),
-       x = NULL) +
-  scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
-  scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
-  scale_shape_manual(values = c(16,1)) +
-  annotate("text", x = 2015, y = 34, label = "Herbicide", 
-           color = "#FE4E00", fontface = "bold") +
-  annotate("text", x = 2004, y = 90, label = "Other pesticides", 
-           color = "#4B0082", fontface = "bold") +
-  geom_smooth(method = "loess", alpha = 0.2) +
-  theme_bw() +
-  theme(plot.title.position = "plot",
-        legend.position = "none",
-        plot.title = element_markdown(),
-        plot.subtitle = element_markdown(size = 10)) -> sales
-
-
-#ggsave("vendas_rate1.png")
-```
 
 
 
@@ -342,7 +268,8 @@ rate_herbicide %>%
 ```
 
 
-```{r eval=FALSE}
+```{r}
+# IBAMA tem dados conjuntos de pesticidas - herbicida separado é apenas na FAO
 ai_rate %>% 
   filter(type != "other") %>% 
   filter(!is.na(rate)) %>% 
@@ -353,50 +280,21 @@ ai_rate %>%
   geom_smooth(method = "loess", alpha = 0.2) +
   scale_x_continuous(limits = c(1990, 2020), #expand = c(.01, .01),
                      breaks = seq(1990, 2020, by = 5)) +
-  scale_y_continuous(limits = c(0, 8), breaks = seq(0, 8, by = 2)) +
-  scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
-  scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
-  scale_shape_manual(values = c(16,1)) +
-  annotate("text", x = 2015, y = 2.4, label = "Herbicide", 
-           color = "#FE4E00", fontface = "bold") +
-  annotate("text", x = 2015, y = 7.6, label = "Pesticide", 
-           color = "#4B0082", fontface = "bold") +
-  theme_bw() +
-  labs(y = expression(paste("Pesticide use (kg ai ha "^"-1",")")),
-       x = NULL, color = NULL, fill = NULL) +
-  theme(legend.position = "none") -> herb
-
-#ggsave("rate.png")
-```
-
-```{r}
-theme_set(theme_bw(base_family = "roboto"))
-ai_rate %>% 
-  filter(type != "pesticide") %>% 
-  filter(!is.na(rate)) %>% 
-  ggplot(aes(x = year, y = rate, color = type, 
-             fill = type, shape = type)) +
-  geom_point() +
-  geom_line() +
-  geom_smooth(method = "loess", alpha = 0.2) +
-  scale_x_continuous(limits = c(1990, 2020), #expand = c(.01, .01),
-                     breaks = seq(1990, 2020, by = 5)) +
-  scale_y_continuous(limits = c(0, 5), breaks = seq(0, 5, by = 1)) +
+  scale_y_continuous(limits = c(0, 8), breaks = seq(0, 8, by = 1)) +
   scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
   scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
   scale_shape_manual(values = c(16,1)) +
   annotate("text", x = 2015, y = 2.5, label = "Herbicide", 
            color = "#FE4E00", fontface = "bold") +
-  annotate("text", x = 2015, y = 4.6, label = "Other pesticides", 
+  annotate("text", x = 2015, y = 5.6, label = "Pesticides", 
            color = "#4B0082", fontface = "bold") +
-  annotate("text", x = 2010, y = 0.1, 
-           label = "Other pesticides: fungicide, insecticide and acaricide", 
-           color = "#4B0082", size = 3) +
+#  annotate("text", x = 2010, y = 0.1, 
+#           label = "Other pesticides: fungicide, insecticide and acaricide", 
+#           color = "#4B0082", size = 3) +
   labs(y = expression(paste("Pesticide sales (kg ai ha "^"-1",")")),
        x = NULL, color = NULL, fill = NULL) +
+  theme_bw(base_family = "lato") +
   theme(legend.position = "none") -> herb
-
-#ggsave("rate1.png")
 ```
 
 
@@ -406,90 +304,23 @@ ai_rate %>%
 library(patchwork)
 sales | herb
 
-ggsave("figure/Figure 1.png", width = 10, height = 5)
-```
-
-
-
-
-
-
-```{r}
-read_csv("../fao/herbicide_fao.csv")  %>% 
-  janitor::clean_names() %>% 
-  left_join(area_br, by = "year") %>%
-  mutate(rate_herb = (value * 1000) / area) %>% 
-  ggplot(aes(x = year, y = rate_herb)) +
-#  geom_smooth(method = "lm") +
-  geom_point() +
-  geom_line() +
-  labs(title = "Herbicide use per area in Brazil",
-       y = "Rate (kg / ha)", 
-       caption = "Source: FAO")
-```
-
-
-<!-- Figura 1C -->
-
-
-```{r eval=FALSE}
-read_csv("br_population.csv") %>% 
-  filter(Element %in% c("Rural population", "Urban population", 
-                        "Total Population - Both sexes")) %>% 
-  mutate(Element = str_remove_all(Element, " population")) %>% 
-  ggplot(aes(x = Year, y = Value, color = Element)) +
-  geom_point(alpha = 0.2) +
-  geom_line() +
-  theme_classic() +
-  labs(y = "Population (x1000)")
-```
-
-
-
-
-
-
-
-
-
-```{r}
-historico2 %>% 
-  filter(location %in% "Total") %>% 
-  left_join(area_br, by = c("year")) %>% 
-  mutate(rate = (qtde * 1000)/area) %>% 
-#  drop_na() %>% 
-#  filter(!location %in% c("NORTE", "CENTRO-OESTE", "NORDESTE", 
-#                          "SUDESTE", "SUL", "BRASIL",
-#                          "Total", "SEM DEFINIÇÃO")) %>% 
-#  mutate(highlight = if_else(location %in% c("MT", "PR", "RS", "SP"), TRUE, FALSE),
-#         variable = if_else(highlight == TRUE, location, "NA")) %>% 
-  ggplot(aes(x = year, y = rate)) +
-  geom_line() +
-  geom_point() +
-#  geom_label() + 
-#  scale_color_manual(values = c("red", "gray80",  "blue", "darkgreen", "black")) +
-  scale_x_continuous(
-    label = scales::number_format(accuracy = 1)) +
-  labs(x = "", y ="",
-       title = "Vendas de ingredientes ativo de pesticidas por area",
-       subtitle = "Unidade de medida em kg de ingrediente ativo por ha",
-       caption = "IBAMA 2020 | Figura: @maxwelco") +
-  theme_hc() 
-
-#ggsave("fig.png")
+ggsave("Figure 1.png", width = 10, height = 5)
 ```
 
 
 <!-- Figura 2 - Aldo -->
 
 ```{r}
-readxl::read_excel("dados_aldo_2019.xlsx") %>% 
+readxl::read_excel("../Ibama/dados_aldo_2019.xlsx") %>% 
   dplyr::select(15:27) %>% 
   janitor::row_to_names(row_number = 1) %>%
   janitor::clean_names() %>% 
   filter(na != "Ton ia") %>% 
   janitor::row_to_names(row_number = 1) %>% 
-  pivot_longer(cols = c(1:10), names_to = "year", values_to = "perc") %>% 
+  mutate("2009" = as.character(0)) %>% 
+  pivot_longer(cols = c(1:10, "2009"), 
+               names_to = "year", 
+               values_to = "perc") %>% 
 #  rename(ton_ia_2010 = `2010`) %>% 
   janitor::clean_names() %>% 
   filter(!is.na(area_tratada_em_2019)) %>% 
@@ -499,10 +330,13 @@ readxl::read_excel("dados_aldo_2019.xlsx") %>%
   mutate(area_tratada_em_2019 = area_tratada_em_2019 / 1000) %>% 
   mutate_if(is.double, ~round(.,1)) -> perc_increase
 ```
+```{r}
+perc_increase %>% 
+  add_row(year = 2009)
+```
 
 
 ```{r}
-theme_set(theme_bw(base_family = "roboto"))
 perc_increase %>% 
   filter(!is.na(perc)) %>% 
   ggplot(aes(x = year, y = perc, color = perc)) +
@@ -510,91 +344,33 @@ perc_increase %>%
   geom_point(size = 2) +
 #  geom_point(data = perc_increase %>% 
 #               filter(year %in% 2019), mapping = aes(size = area_tratada_em_2019)) +
-  scale_x_continuous(limits = c(2010, 2019), breaks = seq(2010, 2019, by = 3)) +
+  scale_x_continuous(limits = c(2009, 2019), 
+                     breaks = seq(2009, 2019, by = 2),
+                     labels = c("2009", "11", "13", "15", "17", "19")) +
   facet_wrap(~ ingrediente_ativo, scales = "free", ncol = 4) +
   scale_color_viridis_c(option = "H",
                         limits = c(-85, 2300)) +
   labs(y = "% active ingrediente increase since 2009",
-       x = NULL, color = NULL) +
+       x = NULL, color = "% increase") +
+  theme_bw(base_family = "lato") +
   theme(legend.position = c(0.75, 0.05),
+        panel.grid = element_line(color = "gray96"),
         legend.direction = "horizontal",
         legend.key.height = unit(1,"line"),
         legend.key.width = unit(3,"line"),
-        legend.title = element_markdown(),
-        plot.title.position = "plot",
-        strip.text = element_markdown(face="bold"))
+        legend.title = element_text(face = "bold"),
+        strip.text = element_markdown(face="bold", size = 11)) +
+  guides(colour = guide_colourbar(title.position="top"))
 
-ggsave("figure/Figure 2.png", height = 12, width = 9)
+ggsave("Figure 2.png", height = 12, width = 9)
 ```
-
-
-
-<!-- Figura 3 -->
-
-Vendas de ing ativo por regiao
-
-
-```{r warning = FALSE , message = FALSE}
-library(readxl)
-
-path <- list.files(path = "../Ibama/ibama_2", pattern = "*.xls", full.names = T) %>% 
-  as_tibble() %>% 
-  rename(files = value)
-
-
-data <- path %>% 
-  mutate(data = map(files, read_excel)) %>% 
-  filter(str_detect(files, "ingredientes")) %>% 
-  mutate(year = 2009:2019)
-
-
-
-clean_data <- function(y){
-  
-data %>% 
-  filter(year == y) %>% 
-  unnest(data) %>% 
-  janitor::row_to_names(row_number = 2) %>% 
-#  mutate(ano = "2012") %>% 
-  janitor::clean_names() %>% 
-  pivot_longer(cols = ro:df, names_to = "state", values_to = "ton") %>% 
-  dplyr::select(ingrediente_ativo, state, ton, vendas_sem_definicao_de_uf,
-                vendas_totais) %>% 
-  mutate_at(c("ton", "vendas_sem_definicao_de_uf", "vendas_totais"), as.double) %>% 
-  mutate_if(is.double, ~round(., 2),
-            is_character, as_factor) %>% 
-  filter(!is.na(ton))
-}
-
-clean_data("2009")
-
-
-
-data1 <- data %>% 
-  mutate(clean_dt = map(year, clean_data)) %>% 
-  dplyr::select(-files, -data) %>% 
-  unnest(clean_dt) %>% 
-  mutate(ingrediente_ativo = tolower(ingrediente_ativo)) %>% 
-  mutate(ingrediente_ativo = fct_collapse(ingrediente_ativo,
-                                          "glifosato" = "glifosato e seus sais"))
-```
-
 
 
 <!-- Figura 3 - Spark -->
 
 
 ```{r}
-(readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
-  mutate(perc = perc / 100,
-         total_ha_soa = total_ha * perc) %>% 
-#  group_by(season) %>% 
-  distinct(total_ha) -> total_ha)
-```
-
-
-```{r}
-readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>% 
+readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_1") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
   mutate(herbicide = str_replace_all(herbicide, "Ohters", "Others")) %>% 
@@ -608,30 +384,6 @@ readxl::read_excel("spark_1.xlsx", sheet = "spark_1") %>%
 
 
 ```{r}
-theme_set(theme_bw(base_family = "roboto"))
-soa_total %>% 
-  ggplot(aes(x = fct_reorder(herbicide, perc), y = perc, 
-             label = perc, fill = herbicide)) +
-  geom_bar(stat = "identity") +
-  scale_fill_viridis_d(option = "H") +
-  coord_flip() +
-  facet_grid(~ season) +
-#  geom_text() +
-#  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
-#            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
-  labs(x = NULL,
-       y = NULL,
-       fill = NULL) +
-  theme(legend.position = "none")
-
-
-ggsave("figure/soa_use.png")
-```
-
-
-```{r}
-theme_set(theme_bw(base_family = "roboto"))
-
 soa_total %>% 
   mutate(herbicide = fct_relevel(herbicide,
                                  levels = c("Others", "Glutamina", 
@@ -642,20 +394,55 @@ soa_total %>%
   ggplot(aes(x = season, y = herbicide, 
              label = percent, fill = perc)) +
   geom_tile() +
-  scale_fill_viridis_b(option = "C") +
+  scale_fill_viridis_b(option = "H") +
 #  coord_flip() +
 #  facet_grid(~ season) +
+  scale_x_discrete(expand = c(0.01, 0.01), 
+                   labels = c("2014/15", "15/16", "16/17", 
+                              "17/18", "18/19", "19/20")) +
    geom_text(color = "gray1") +
 #  geom_text(soa_total %>% filter(herbicide == "EPSPs"), 
 #            mapping = aes(label = mi_ha), y = 0.5, color = "gray30") +
   labs(x = NULL,
        y = NULL,
        fill = NULL) +
-  theme(legend.position = "none")
+  theme_bw(base_family = "lato") +
+  theme(legend.position = "none") -> fig_perc
 
 
-ggsave("figure/soa_use.png", width = 5)
+ggsave("Figure 3.png", width = 5)
 ```
+
+
+```{r}
+soa_total %>% 
+  dplyr::select(season, total) %>% 
+  unique() %>% 
+  mutate(total_mi = round(total / 1000,2)) -> total_ha 
+```
+
+```{r}
+total_ha %>% 
+  ggplot(aes(x = season, y = total_mi, fill = total_mi)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.8) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_family = "lato") +
+  scale_fill_viridis_c(option = "C") +
+  geom_text(aes(label = total_mi), nudge_y = -30, fontface = "bold") + 
+  annotate("text", x = 1, y = 280, label = "Million ha", fontface = "bold") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank()) -> fig_ha
+```
+
+```{r}
+fig_ha / fig_perc +
+  plot_layout(heights = c(1, 3)) 
+
+ggsave("Figure 3.png")
+```
+
+
+
 
 
 ```{r}
@@ -683,29 +470,39 @@ soa_total1 %>%
   geom_bump(size = 2, smooth = 8) +
   geom_text(data = soa_total1,
             mapping = aes(label = perc*100), 
-            size = 3, color = 1) +
+            size = 3, color = "white") +
   scale_x_continuous(limits = c(2013.55, 2021.5),
                      breaks = seq(2015, 2020, 1)) +
-  theme_minimal_grid(font_size = 14, line_size = 0) +
+  theme_minimal(base_family = "lato") +
   scale_y_reverse(breaks = seq(0, 12, 1)) +
-#  scale_colour_viridis_d(option = "F") +
-  scale_fill_fish_d(option = "Scarus_quoyi") +
+  scale_colour_viridis_d(option = "C") +
   labs(x = NULL) +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        panel.grid = element_blank())
 
-ggsave("figure/soa_use1.png", bg = "beige")
+ggsave("Figure 3A.png", bg = "gray90")
 ```
 
 
 
 
 ```{r}
-readxl::read_excel("spark_1.xlsx", sheet = "spark_2") %>% 
+readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_2") %>% 
   mutate(perc = perc / 100,
          total_ha_soa = total_ha * perc) %>% 
   mutate(crop = str_to_title(crop)) %>% 
   mutate(mi_ha = round(total_ha_soa / 1000000, 5),
-         mi_ha = str_glue("{mi_ha} mi ha")) -> soa_crop
+         mi_ha = str_glue("{mi_ha} mi ha")) %>% 
+  mutate(soa = fct_recode(soa,
+                          "PSI" = "FSI",
+                          "Glutamine" = "Glutamina",
+                          "VLCFA" = "Divisao celular",
+                          "Auxins" = "Auxinas",
+                          "PSII" = "FSII")) -> soa_crop
+```
+
+```{r}
+soa_crop 
 ```
 
 
@@ -723,26 +520,31 @@ soa_crop %>%
             angle = 90, color = "gray75") +
   theme_hc()
 
-ggsave("figure/soa_crop.png")
+ggsave("Figure 4.png")
 ```
 
 ```{r}
 options(scipen=999)
 soa_crop %>%  
 #  filter(crop == "Soybean") %>% 
-  ggplot(aes(x = year, y = total_ha_soa, fill = soa)) +
+  ggplot(aes(x = year, y = total_ha_soa/1000000, fill = soa)) +
   geom_area(position = "stack") +
-  facet_grid(~ crop) +
+  facet_wrap(~ crop, scales = "free") +
 #  coord_flip() +
   labs(x = NULL,
-       y = NULL,
-       fill = NULL) +
+       y = "Million ha",
+       fill = "Herbicide sites of action") +
   scale_fill_viridis_d(option = "H", guide = guide_legend(nrow = 2)) +
-  scale_x_continuous(breaks = c(2018, 2019, 2020)) +
-  theme_hc() +
-  theme(axis.text = element_markdown(angle = 0))
+  scale_x_continuous(breaks = c(2018, 2019, 2020), 
+                     labels = c("2017/18", "18/19", "19/20")) +
+  theme_bw(base_family = "lato") +
+  theme(legend.position = c(0.85, 0.25),
+        legend.text = element_markdown(size = 9),
+        legend.key.size = unit(1,"line"),
+        strip.text = element_markdown(face = "bold", size = 10)) +
+  guides(fill = guide_legend(nrow = 6))
 
-ggsave("figure/soa_crop1.png", width = 9, height = 4)
+ggsave("Figure 4A.png", dpi = 300)
 ```
 
 

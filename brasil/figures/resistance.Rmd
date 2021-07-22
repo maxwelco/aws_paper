@@ -205,6 +205,7 @@ world_points <- cbind(world,
 
 ```{r}
 library(extrafont)
+library(ggtext)
 library(showtext)
 showtext_auto()
 font_add_google("Roboto", "roboto") 
@@ -252,14 +253,19 @@ map1 +
 
 
 ```{r}
+label <- glue::glue("**Brazil** has the most cases of herbicide<br> resistant weeds (n={sa_wr$n[1]}), followed by <br>**Argentina** (n={sa_wr$n[2]}), **Chile** (n={sa_wr$n[3]}), <br>**Colombia** (n={sa_wr$n[4]}), **Venezuela** (n={sa_wr$n[5]}), <br>**Bolivia** (n={sa_wr$n[6]}), Paraguay (n={sa_wr$n[7]}), <br>**Uruguay** (n={sa_wr$n[8]}), **Ecuardor** (n={sa_wr$n[9]}),<br> and **Peru** (n={sa_wr$n[10]})")
+```
+
+
+```{r}
 map2 + 
-  geom_richtext(x = -60, y = -42, 
+  geom_richtext(x = -57, y = -44, 
                 hjust = 0, size = 4,
                 fill = NA, label.color = NA,
-                label = glue::glue("**Brazil** has the most cases of herbicide<br> resistant weeds (n={sa_wr$n[1]}), followed by <br>**Argentina** (n={sa_wr$n[2]}), **Chile** (n={sa_wr$n[3]}), <br>**Colombia** (n={sa_wr$n[4]}), **Venezuela** (n={sa_wr$n[5]}), <br>**Bolivia** (n={sa_wr$n[6]}), Paraguay (n={sa_wr$n[7]}), <br>**Uruguay** (n={sa_wr$n[8]}), and **Ecuardor** (n={sa_wr$n[9]}).<br> No herbicide resistant weeds have been reported in **Peru**.")) 
+                label = label)
  
 
-ggsave("map.png", width = 9, height = 9)
+ggsave("figure/map.png", width = 9, height = 9)
 ```
 
 
