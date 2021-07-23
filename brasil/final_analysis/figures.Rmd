@@ -311,39 +311,91 @@ ggsave("Figure 1.png", width = 10, height = 5)
 <!-- Figura 2 - Aldo -->
 
 ```{r}
-readxl::read_excel("../Ibama/dados_aldo_2019.xlsx") %>% 
-  dplyr::select(15:27) %>% 
-  janitor::row_to_names(row_number = 1) %>%
-  janitor::clean_names() %>% 
-  filter(na != "Ton ia") %>% 
-  janitor::row_to_names(row_number = 1) %>% 
-  mutate("2009" = as.character(0)) %>% 
-  pivot_longer(cols = c(1:10, "2009"), 
+readxl::read_excel("../Ibama/dados_aldo_2019.xlsx", 
+                   sheet = "Var 2009-19 Hs e Culturas") %>% 
+  janitor::row_to_names(row_number = 2) %>% 
+  slice_head(n = 25) %>%
+  mutate(`2008` = as.character(0)) %>% 
+  pivot_longer(cols = c(3:13), 
                names_to = "year", 
                values_to = "perc") %>% 
-#  rename(ton_ia_2010 = `2010`) %>% 
   janitor::clean_names() %>% 
-  filter(!is.na(area_tratada_em_2019)) %>% 
+  filter(!is.na(ingrediente_ativo)) %>% 
+  rename(ton_ia = x2009) %>% 
+  mutate(year = str_replace(year, "2008", "2009")) %>% 
   mutate(ingrediente_ativo = as_factor(ingrediente_ativo)) %>% 
   mutate_if(is_character, as.double) %>%
-  filter(!is.na(ingrediente_ativo)) %>% 
-  mutate(area_tratada_em_2019 = area_tratada_em_2019 / 1000) %>% 
-  mutate_if(is.double, ~round(.,1)) -> perc_increase
+  mutate_if(is.double, ~round(.,1)) %>% 
+  mutate(first_yr = if_else(ingrediente_ativo %in% 
+                              c("cletodim", "fenoxaprope-P-etílico",
+                                "triclopir-butotílico") , 
+                            2010, 
+                            2009)) %>% 
+  mutate(ton_ia = case_when(
+    ingrediente_ativo == "cletodim" ~ 244.5,
+    ingrediente_ativo == "fenoxaprope-P-etílico" ~ 55.2,
+    ingrediente_ativo == "triclopir-butotílico" ~ 489.8,
+    TRUE ~ ton_ia
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "cletodim" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "fenoxaprope-P-etílico" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "triclopir-butotílico" & year == 2009 ~ NA_real_,
+    TRUE ~ perc
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "cletodim" & year == 2010 ~ 0,
+    ingrediente_ativo == "fenoxaprope-P-etílico" & year == 2010 ~ 0,
+    ingrediente_ativo == "triclopir-butotílico" & year == 2010 ~ 0,
+    TRUE ~ perc
+  )) -> perc_increase
 ```
-```{r}
-perc_increase %>% 
-  add_row(year = 2009)
-```
+
+  mutate(first_yr = if_else(ingrediente_ativo %in% 
+                              c("glufosinato - sal de amônio",
+                                "haloxifope-P-metílico",
+                                "sulfentrazona"), 
+                            2017, 
+                            2009)) %>% 
 
 
 ```{r}
 perc_increase %>% 
+  mutate(first_yr = case_when(
+    ingrediente_ativo %in% c("glufosinato - sal de amônio",
+                                "haloxifope-P-metílico",
+                                "sulfentrazona") ~ 2017,
+    TRUE ~ first_yr
+  )) %>% 
+    mutate(ton_ia = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" ~ 1137.65,
+    ingrediente_ativo == "haloxifope-P-metílico" ~ 690,
+    ingrediente_ativo == "sulfentrazona" ~ 1185.9,
+    TRUE ~ ton_ia
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "haloxifope-P-metílico" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "sulfentrazona" & year == 2009 ~ NA_real_,
+    TRUE ~ perc
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" & year == 2017 ~ 0,
+    ingrediente_ativo == "haloxifope-P-metílico" & year == 2017 ~ 0,
+    ingrediente_ativo == "sulfentrazona" & year == 2017 ~ 0,
+    TRUE ~ perc)) -> perc_increase1
+```
+
+
+```{r}
+perc_increase1 %>% 
+  filter(ingrediente_ativo != "Total") %>% 
   filter(!is.na(perc)) %>% 
   ggplot(aes(x = year, y = perc, color = perc)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-#  geom_point(data = perc_increase %>% 
-#               filter(year %in% 2019), mapping = aes(size = area_tratada_em_2019)) +
+  geom_point(data = perc_increase1 %>% 
+               filter(year %in% 2009), mapping = aes(size = ton_ia)) +
   scale_x_continuous(limits = c(2009, 2019), 
                      breaks = seq(2009, 2019, by = 2),
                      labels = c("2009", "11", "13", "15", "17", "19")) +
@@ -353,7 +405,7 @@ perc_increase %>%
   labs(y = "% active ingrediente increase since 2009",
        x = NULL, color = "% increase") +
   theme_bw(base_family = "lato") +
-  theme(legend.position = c(0.75, 0.05),
+  theme(legend.position = "none",
         panel.grid = element_line(color = "gray96"),
         legend.direction = "horizontal",
         legend.key.height = unit(1,"line"),
