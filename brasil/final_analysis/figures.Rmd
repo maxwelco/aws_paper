@@ -310,7 +310,7 @@ ggsave("Figure 1.png", width = 10, height = 5)
 
 <!-- Figura 2 - Aldo -->
 
-```{r}
+```{r message = FALSE}
 readxl::read_excel("../Ibama/dados_aldo_2019.xlsx", 
                    sheet = "Var 2009-19 Hs e Culturas") %>% 
   janitor::row_to_names(row_number = 2) %>% 
@@ -351,12 +351,7 @@ readxl::read_excel("../Ibama/dados_aldo_2019.xlsx",
   )) -> perc_increase
 ```
 
-  mutate(first_yr = if_else(ingrediente_ativo %in% 
-                              c("glufosinato - sal de amônio",
-                                "haloxifope-P-metílico",
-                                "sulfentrazona"), 
-                            2017, 
-                            2009)) %>% 
+
 
 
 ```{r}
@@ -383,36 +378,45 @@ perc_increase %>%
     ingrediente_ativo == "glufosinato - sal de amônio" & year == 2017 ~ 0,
     ingrediente_ativo == "haloxifope-P-metílico" & year == 2017 ~ 0,
     ingrediente_ativo == "sulfentrazona" & year == 2017 ~ 0,
-    TRUE ~ perc)) -> perc_increase1
+    TRUE ~ perc)) %>% 
+  filter(ingrediente_ativo != "Total") %>% 
+  mutate(ton_ia = ton_ia / 1000) -> perc_increase1
 ```
 
 
 ```{r}
 perc_increase1 %>% 
-  filter(ingrediente_ativo != "Total") %>% 
   filter(!is.na(perc)) %>% 
   ggplot(aes(x = year, y = perc, color = perc)) +
   geom_line(size = 1) +
-  geom_point(size = 2) +
+  geom_point() +
   geom_point(data = perc_increase1 %>% 
-               filter(year %in% 2009), mapping = aes(size = ton_ia)) +
-  scale_x_continuous(limits = c(2009, 2019), 
+               filter(first_yr %in% 2009 & year == 2009),
+             mapping = aes(size = ton_ia)) +
+  geom_point(data = perc_increase1 %>% 
+               filter(first_yr %in% 2010 & year == 2010), 
+             mapping = aes(size = ton_ia)) +
+  geom_point(data = perc_increase1 %>% 
+               filter(first_yr %in% 2017 & year == 2017), 
+             mapping = aes(size = ton_ia)) +
+  scale_x_continuous(limits = c(2008.8, 2019.2), 
                      breaks = seq(2009, 2019, by = 2),
                      labels = c("2009", "11", "13", "15", "17", "19")) +
   facet_wrap(~ ingrediente_ativo, scales = "free", ncol = 4) +
   scale_color_viridis_c(option = "H",
                         limits = c(-85, 2300)) +
   labs(y = "% active ingrediente increase since 2009",
-       x = NULL, color = "% increase") +
+       x = NULL, color = "% increase", size = "ton/ha (x1000)") +
   theme_bw(base_family = "lato") +
-  theme(legend.position = "none",
+  theme(legend.position = c(0.88, 0.07),
         panel.grid = element_line(color = "gray96"),
         legend.direction = "horizontal",
-        legend.key.height = unit(1,"line"),
-        legend.key.width = unit(3,"line"),
+        legend.key.height = unit(0.8,"line"),
+        legend.key.width = unit(1.7,"line"),
         legend.title = element_text(face = "bold"),
         strip.text = element_markdown(face="bold", size = 11)) +
-  guides(colour = guide_colourbar(title.position="top"))
+  guides(colour = guide_colourbar(title.position="top", order = 1),
+         size = guide_legend(title.position="top", order = 2))
 
 ggsave("Figure 2.png", height = 12, width = 9)
 ```
