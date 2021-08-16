@@ -132,7 +132,7 @@ pest_sales %>%
 ggplot(aes(x = year, y = rate_herb, color = type, 
              fill = type, shape = type)) +
   geom_point() +
-  geom_line() +
+  geom_line(alpha = 0.5) +
   scale_y_continuous(limits = c(0, 60)) +
   scale_x_continuous(limits = c(1978, 2020), 
                      breaks = seq(1980, 2020, by = 10)) +
@@ -142,32 +142,33 @@ ggplot(aes(x = year, y = rate_herb, color = type,
   scale_fill_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
   scale_shape_manual(values = c(1, 1, 16, 1)) +
   annotate("text", x = 1998, y = 33, 
-           fontface = "bold", 
+           fontface = "bold", size = 10,
            label = "Herbicide", color = "#FE4E00") +
   geom_curve(x = 2013, y = 55, 
                    xend = 2011, yend = 57,
                arrow = arrow(length = unit(0.07, "inch")), 
                size = 0.4, curvature = 0.3, color = "#e5e5ff") + 
   annotate("text", x = 2008, y = 57, #fontface = NULL,
-           label = "Inseticide", size = 3, color = "#e5e5ff") +
+           label = "Inseticide", size = 10, color = "#e5e5ff") +
   geom_curve(x = 2007, y = 18, 
                    xend = 2009, yend = 15,
                arrow = arrow(length = unit(0.07, "inch")), 
                size = 0.4, curvature = 0.3, color = "#d2f8d2") + 
   annotate("text", x = 2012, y = 15.5, #fontface = NULL,
-           label = "Fungicide", size = 3, color = "#d2f8d2") +
+           label = "Fungicide", size = 10, color = "#d2f8d2") +
   geom_curve(x = 2011, y = 1.5, 
                    xend = 2013, yend = 5,
                arrow = arrow(length = unit(0.07, "inch")), 
                size = 0.4, curvature = -0.3, color = "grey80") + 
   annotate("text", x = 2016, y = 5, #fontface = NULL,
-           label = "Acaricide", size = 3, color = "grey80") +
+           label = "Acaricide", size = 10, color = "grey80") +
   geom_smooth(method = "loess", alpha = 0.05) +
   theme_bw(base_family = "lato") +
   theme(plot.title.position = "plot",
         legend.position = "none",
-        plot.title = element_markdown(),
-        plot.subtitle = element_markdown(size = 10)) -> sales
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
+        panel.grid = element_line(color = "gray96")) -> sales
 ```
 
 
@@ -276,7 +277,7 @@ ai_rate %>%
   ggplot(aes(x = year, y = rate, color = type, 
              fill = type, shape = type)) +
   geom_point() +
-  geom_line() +
+  geom_line(alpha = 0.5) +
   geom_smooth(method = "loess", alpha = 0.2) +
   scale_x_continuous(limits = c(1990, 2020), #expand = c(.01, .01),
                      breaks = seq(1990, 2020, by = 5)) +
@@ -285,16 +286,19 @@ ai_rate %>%
   scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
   scale_shape_manual(values = c(16,1)) +
   annotate("text", x = 2015, y = 2.5, label = "Herbicide", 
-           color = "#FE4E00", fontface = "bold") +
-  annotate("text", x = 2015, y = 5.6, label = "Pesticides", 
-           color = "#4B0082", fontface = "bold") +
+           color = "#FE4E00", fontface = "bold", size = 10) +
+  annotate("text", x = 2015, y = 6, label = "Pesticides", 
+           color = "#4B0082", fontface = "bold", size = 10) +
 #  annotate("text", x = 2010, y = 0.1, 
 #           label = "Other pesticides: fungicide, insecticide and acaricide", 
 #           color = "#4B0082", size = 3) +
   labs(y = expression(paste("Pesticide sales (kg ai ha "^"-1",")")),
        x = NULL, color = NULL, fill = NULL) +
   theme_bw(base_family = "lato") +
-  theme(legend.position = "none") -> herb
+  theme(legend.position = "none",
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
+        panel.grid = element_line(color = "gray96")) -> herb
 ```
 
 
@@ -379,46 +383,121 @@ perc_increase %>%
     ingrediente_ativo == "haloxifope-P-metílico" & year == 2017 ~ 0,
     ingrediente_ativo == "sulfentrazona" & year == 2017 ~ 0,
     TRUE ~ perc)) %>% 
-  filter(ingrediente_ativo != "Total") %>% 
-  mutate(ton_ia = ton_ia / 1000) -> perc_increase1
+  filter(ingrediente_ativo != "Total") -> perc_increase1
+#  mutate(ton_ia = ton_ia / 1000) 
 ```
 
 
 ```{r}
 perc_increase1 %>% 
+  mutate(ingrediente_ativo = fct_recode(ingrediente_ativo,
+   "2,4-D" = "2,4-d",
+   "ametryn" = "ametrina",
+   "atrazine" = "atrazina",
+   "clethodim" = "cletodim",
+   "clomazone" = "clomazona",
+   "chlorimurom-ethyl" = "clorimurom-etílico",
+   "paraquat" = "dicloreto de paraquate",
+   "diuron" = "diurom",
+   "fenoxaprop-P" = "fenoxaprope-P-etílico",
+   "glyphosate" = "glifosato (soma sais)",
+   "glufosinate" = "glufosinato - sal de amônio",
+   "haloxifop" = "haloxifope-P-metílico",
+   "hexazinone" = "hexazinona",
+   "imazaquin" = "imazaquim", 
+   "imazethapyr" = "imazetapir",
+   "metsulfuron-methyl" = "metsulfurom-metílico",
+   "nicosulfuron" = "nicosulfurom",
+   "picloram" = "picloram",
+   "propanil" = "propanil",
+   "simazine" = "simazina",
+   "sulfentrazone" = "sulfentrazona",
+   "triclopyr" = "triclopir-butotílico",
+   "trifluralin" = "trifluralina"
+  )) %>% 
+  mutate(ingrediente_ativo1 = fct_relevel(ingrediente_ativo,
+                                         levels = c("glufosinate", "haloxifop",
+                                                    "imazaquin", "nicosulfuron",
+                                                    "sulfentrazone", 
+                                                    "trifluralin", "glyphosate", 
+                                                    "imazethapyr", "clomazone",
+                                                    "propanil", "ametryn",
+                                                    "atrazine", "hexazinone", "triclopyr",
+                                                    "diuron", "fenoxaprop-P",
+                                                    "2,4-D","simazine",
+                                                    "picloram", "chlorimurom-ethyl", 
+                                                    "metsulfuron-methyl", "paraquat", "clethodim"))) %>% 
+  mutate(ton_ia = round(ton_ia, 0)) -> perc_increase2
+```
+
+```{r}
+perc_increase2 %>% 
+  mutate(ton_ia = paste(ton_ia, "ton ha<sup>-1</sup>")) %>% 
+  mutate(ton_ia2009 = if_else(year == 2009 & first_yr == 2009, ton_ia, NA_character_)) %>% 
+  mutate(ton_ia2010 = if_else(year == 2010 & first_yr == 2010, ton_ia, NA_character_)) %>% 
+  mutate(ton_ia2017 = if_else(year == 2017 & first_yr == 2017, ton_ia, NA_character_)) %>% 
+  unite("ton", c(ton_ia2009, ton_ia2010, ton_ia2017), na.rm = TRUE)  -> perc_increase3
+```
+
+
+```{r}
+perc_increase3 %>% 
   filter(!is.na(perc)) %>% 
   ggplot(aes(x = year, y = perc, color = perc)) +
   geom_line(size = 1) +
   geom_point() +
-  geom_point(data = perc_increase1 %>% 
-               filter(first_yr %in% 2009 & year == 2009),
-             mapping = aes(size = ton_ia)) +
-  geom_point(data = perc_increase1 %>% 
-               filter(first_yr %in% 2010 & year == 2010), 
-             mapping = aes(size = ton_ia)) +
-  geom_point(data = perc_increase1 %>% 
-               filter(first_yr %in% 2017 & year == 2017), 
-             mapping = aes(size = ton_ia)) +
-  scale_x_continuous(limits = c(2008.8, 2019.2), 
+  scale_x_continuous(limits = c(2008, 2020), 
                      breaks = seq(2009, 2019, by = 2),
                      labels = c("2009", "11", "13", "15", "17", "19")) +
-  facet_wrap(~ ingrediente_ativo, scales = "free", ncol = 4) +
+  facet_wrap(~ ingrediente_ativo1, 
+             scales = "free", 
+             ncol = 4) +
   scale_color_viridis_c(option = "H",
                         limits = c(-85, 2300)) +
-  labs(y = "% active ingrediente increase since 2009",
-       x = NULL, color = "% increase", size = "ton/ha (x1000)") +
+  geom_richtext(
+    data = perc_increase3 %>% 
+                  filter(!is.na(ton)),
+    mapping = aes(label = ton), show.legend = FALSE,
+    family = "lato",
+    fontface = "bold",
+    color = "2",
+    size = 8,
+    fill = NA, 
+    label.color = NA,
+    hjust = 0
+  ) +
+  labs(y = "% active ingrediente increase",
+       x = NULL, color = "% increase") +
   theme_bw(base_family = "lato") +
   theme(legend.position = c(0.88, 0.07),
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
         panel.grid = element_line(color = "gray96"),
         legend.direction = "horizontal",
-        legend.key.height = unit(0.8,"line"),
-        legend.key.width = unit(1.7,"line"),
-        legend.title = element_text(face = "bold"),
-        strip.text = element_markdown(face="bold", size = 11)) +
+        legend.key.height = unit(0.7,"cm"),
+        legend.key.width = unit(0.9,"cm"),
+        legend.title = element_text(face = "bold", size = 30),
+        legend.text = element_text(face = "bold", size = 30, 
+                                   margin = margin(b = 0, unit = 'cm')),
+        strip.text.x = element_markdown(face="bold", size = 35) 
+        ) +
+  guides(colour = guide_colourbar(title.position="top", 
+                                  frame.colour = "black",
+                                  order = 1)) #,
+#         size = guide_legend(title.position="top", order = 2))
+
+
+ggsave("Figure 2.png", height = 12, width = 9)
+```
+
+
+```{r}
+
+ +
   guides(colour = guide_colourbar(title.position="top", order = 1),
          size = guide_legend(title.position="top", order = 2))
 
-ggsave("Figure 2.png", height = 12, width = 9)
+
 ```
 
 
