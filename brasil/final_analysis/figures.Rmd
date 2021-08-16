@@ -491,14 +491,6 @@ ggsave("Figure 2.png", height = 12, width = 9)
 ```
 
 
-```{r}
-
- +
-  guides(colour = guide_colourbar(title.position="top", order = 1),
-         size = guide_legend(title.position="top", order = 2))
-
-
-```
 
 
 <!-- Figura 3 - Spark -->
@@ -585,37 +577,57 @@ library(ggbump)
 library(cowplot)
 library(fishualize)
 ```
-
 ```{r}
 soa_total %>% 
+  mutate(herbicide = fct_recode(herbicide, 
+                                "PSII" = "FSII",
+                                "PSI" = "FSI",
+                                "Auxins" = "Auxinas",
+                                "Glutamine" = "Glutamina")) -> soa_total1
+```
+
+
+
+```{r}
+soa_total1 %>% 
   group_by(year) %>% 
   arrange(desc(total_ha_soa)) %>% 
-  mutate(rank = row_number()) -> soa_total1
+  mutate(rank = row_number()) -> soa_total2
 
-soa_total1 %>% 
+soa_total2 %>% 
   ggplot(aes(x = year, y = rank, color = herbicide,
              label = herbicide)) +
-  geom_text(data = soa_total1 %>% filter(year == 2020),
+  geom_text(data = soa_total2 %>% filter(year == 2020),
             mapping = aes(x = year + .3, label = herbicide), 
-            size = 5, hjust = 0) +
-  geom_text(data = soa_total1 %>% filter(year == 2015),
-            mapping = aes(x = year - 1.45, label = herbicide), 
-            size = 5, hjust = 0) +
-  geom_point(size = 7) +
+            size = 11, hjust = 0, fontface = "bold") +
+  geom_text(data = soa_total2 %>% filter(year == 2015),
+            mapping = aes(x = year - .3, label = herbicide), 
+            size = 11, hjust = 1, fontface = "bold") +
+  geom_text(data = soa_total2,
+            mapping = aes(y = 12, label = mi_ha), 
+            size = 9, hjust = 0.5, color = 1, fontface = "bold") +
+  geom_text(data = soa_total2 %>% filter(year == 2015),
+            mapping = aes(y = rank, x = year - 1.3, label = rank), 
+            size = 9, hjust = 0.5, color = 1, fontface = "bold") +
+  geom_point(size = 8) +
   geom_bump(size = 2, smooth = 8) +
-  geom_text(data = soa_total1,
+  geom_text(data = soa_total2 ,
             mapping = aes(label = perc*100), 
-            size = 3, color = "white") +
-  scale_x_continuous(limits = c(2013.55, 2021.5),
+            size = 9, fontface = "bold", color = 1) +
+  scale_x_continuous(limits = c(2014.2, 2020.8),
                      breaks = seq(2015, 2020, 1)) +
   theme_minimal(base_family = "lato") +
   scale_y_reverse(breaks = seq(0, 12, 1)) +
-  scale_colour_viridis_d(option = "C") +
-  labs(x = NULL) +
+#  scale_colour_viridis_d(option = "C") +
+  scale_color_brewer(palette = "Paired") +
+  labs(x = NULL, y = NULL) +
   theme(legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.text.x = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
         panel.grid = element_blank())
 
-ggsave("Figure 3A.png", bg = "gray90")
+ggsave("Figure 3.png", bg = "gray96")
 ```
 
 
