@@ -440,7 +440,21 @@ perc_increase2 %>%
 ```
 
 ```{r}
-
+perc_increase3 %>% 
+  filter(!is.na(perc)) %>% 
+  mutate(group = case_when(
+    ingrediente_ativo1 %in% c("glufosinate", "haloxifop", 
+                             "imazaquin", "nicosulfuron") ~ "group1",
+    ingrediente_ativo1 %in% c("sulfentrazone", "trifluralin", 
+                             "glyphosate", "imazethapyr") ~ "group2",
+    ingrediente_ativo1 %in% c("clomazone", "propanil", 
+                             "ametryn", "atrazine") ~ "group3",
+    ingrediente_ativo1 %in% c("hexazinone", "triclopyr", 
+                             "diuron", "fenoxaprop-P") ~ "group4",
+    ingrediente_ativo1 %in% c("2,4-D", "simazine", 
+                             "picloram", "chlorimuron-ethyl") ~ "group5",
+    TRUE ~ "group6"
+  )) -> perc_increase4
 ```
 
 
@@ -456,8 +470,12 @@ perc_increase3 %>%
   scale_x_continuous(limits = c(2008, 2020), 
                      breaks = seq(2009, 2019, by = 2),
                      labels = c("2009", "11", "13", "15", "17", "19")) +
-  facet_wrap(~ ingrediente_ativo1, 
-             scales = "free_y", 
+ # facet_wrap2(vars(ingrediente_ativo1), 
+ #            scales = "free_y",
+ #            ncol = 4, as.table = TRUE,
+ #            axes = "full", remove_labels = "all") +
+  facet_wrap(~ ingrediente_ativo1,
+             scales = "free_y",
              ncol = 4) +
   facetted_pos_scales(
     y = rep(list(
@@ -469,7 +487,7 @@ perc_increase3 %>%
       scale_y_continuous(limits = c(0, 2300))
     ), each = 4)
   ) +
-  scale_color_viridis_c(option = "H",
+    scale_color_viridis_c(option = "H",
                         limits = c(-85, 2300)) +
   geom_richtext(
     data = perc_increase3 %>% 
@@ -506,6 +524,10 @@ perc_increase3 %>%
 
 ggsave("Figure 2.png", height = 12, width = 9)
 ```
+
+
+
+
 
 
 
@@ -725,29 +747,30 @@ ggsave("Figure 4A.png", dpi = 300)
 ```
 
 ```{r}
-soa_crop %>%  
-  ggplot(aes(x = soa, y = perc, fill = year_season)) +
+soa_crop %>%   # 
+  ggplot(aes(x = soa, y = total_ha_soa/1000000, fill = year_season)) +
   geom_bar(stat = "identity",
-           position = position_dodge2(width = 0.5)) +
-  facet_wrap(~ crop, scales = "free") +
+           position = position_stack()) +
+  facet_grid(~ crop, scales = "free") +
   coord_flip() +
   labs(x = NULL,
        y = "Million ha",
        fill = "Herbicide sites of action") +
-#  scale_fill_ipsum() +
-#   scale_fill_brewer(palette = "Paired") +
-#  scale_fill_viridis_d(option = "F", guide = guide_legend(nrow = 2)) +
-#  scale_x_continuous(breaks = c(2018, 2019, 2020), 
-#                     labels = c("2017/18", "18/19", "19/20")) +
   theme_bw(base_family = "lato") +
-  theme(legend.position = c(0.85, 0.25),
-        legend.text = element_markdown(size = 9),
-        legend.key.size = unit(1,"line"),
-        strip.text = element_markdown(face = "bold", size = 10)) +
+  theme(legend.position = "none",
+        legend.text = element_markdown(size = 20),
+        axis.title = element_markdown(size = 30),
+        axis.text = element_markdown(size = 28),
+        strip.text = element_markdown(face = "bold", size = 30)) +
   guides(fill = guide_legend(nrow = 6))
 
-ggsave("Figure 4D.png", height = 9, width = 6, dpi = 300)
+ggsave("Figure 4D.png", height = 5, width = 10, dpi = 300)
 ```
+
+
+
+
+
 
 
 
