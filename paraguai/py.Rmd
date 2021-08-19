@@ -1,0 +1,33 @@
+---
+title: "paraguai"
+author: "Maxwel Coura Oliveira"
+date: "8/19/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+readxl::read_excel("herbicidas_paraguai.xlsx", sheet = "Resumo Final") %>% 
+  janitor::row_to_names(row_number = 1) %>% 
+  pivot_longer(c(`2018`, `2019`, `2020`), names_to = "year", values_to = "value") %>% 
+  janitor::clean_names() %>% 
+  mutate(producto = str_remove(producto, " TECNICO"),
+         producto = str_to_lower(producto)) %>% 
+  mutate(total_general = as.double(total_general),
+         value = as.double(value)) %>% 
+  mutate(year = as.double(year)) %>% 
+  mutate_if(is.double, ~round(., 1)) -> py
+```
+
+```{r}
+py %>% 
+  ggplot(aes(x = year, y = value, color = producto)) +
+  geom_point() 
+
+ggsave("py.png", width = 12)
+```
+
