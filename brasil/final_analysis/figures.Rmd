@@ -16,6 +16,7 @@ library(ggtext)
 library(ggtext)
 library(extrafont)
 library(showtext)
+library(dutchmasters)
 showtext_auto()
 font_add_google("Lato", "lato") 
 ```
@@ -432,10 +433,13 @@ perc_increase1 %>%
 
 ```{r}
 perc_increase2 %>% 
-  mutate(ton_ia = paste(ton_ia, "ton ha<sup>-1</sup>")) %>% 
-  mutate(ton_ia2009 = if_else(year == 2009 & first_yr == 2009, ton_ia, NA_character_)) %>% 
-  mutate(ton_ia2010 = if_else(year == 2010 & first_yr == 2010, ton_ia, NA_character_)) %>% 
-  mutate(ton_ia2017 = if_else(year == 2017 & first_yr == 2017, ton_ia, NA_character_)) %>% 
+  mutate(ton_ia2 = paste(ton_ia, "ton ha<sup>-1</sup>")) %>% 
+  mutate(ton_ia2009 = if_else(year == 2009 & first_yr == 2009, 
+                              ton_ia, NA_real_)) %>% 
+  mutate(ton_ia2010 = if_else(year == 2010 & first_yr == 2010, 
+                              ton_ia, NA_real_)) %>% 
+  mutate(ton_ia2017 = if_else(year == 2017 & first_yr == 2017, 
+                              ton_ia, NA_real_)) %>% 
   unite("ton", c(ton_ia2009, ton_ia2010, ton_ia2017), na.rm = TRUE)  -> perc_increase3
 ```
 
@@ -457,26 +461,41 @@ perc_increase3 %>%
   )) -> perc_increase4
 ```
 
+```{r}
+perc_increase4 %>% 
+  mutate(label = case_when(
+    ingrediente_ativo1 == "glufosinate" ~ "Values in ton ha<sup>-1</sup>",
+    TRUE ~ NA_character_
+  )) -> perc_increase5
+```
+
+
+```{r}
+perc_increase5 %>% filter(year == 2019) %>% 
+  mutate(ton2 = parse_number(ton_ia2)) %>% 
+  mutate(ton3 = round(ton2 * (perc/100),0)) %>% 
+  mutate(ton4 = ton2 + ton3) -> perc_increase6
+```
+
 
 
 ```{r}
 library(ggh4x)
 library(lemon)
-perc_increase3 %>% 
+```
+
+
+```{r}
+perc_increase5 %>% 
   filter(!is.na(perc)) %>% 
   ggplot(aes(x = year, y = perc, color = perc)) +
   geom_line(size = 1) +
   geom_point() +
-  scale_x_continuous(limits = c(2008, 2020), 
-                     breaks = seq(2009, 2019, by = 2),
-                     labels = c("2009", "11", "13", "15", "17", "19")) +
- # facet_wrap2(vars(ingrediente_ativo1), 
- #            scales = "free_y",
- #            ncol = 4, as.table = TRUE,
- #            axes = "full", remove_labels = "all") +
+  scale_x_continuous(limits = c(2008, 2022), 
+                     breaks = c(2009, 2012, 2015, 2018, 2021),
+                     labels = c("2009", "12", "15", "18", "21")) +
   facet_wrap(~ ingrediente_ativo1,
-             scales = "free_y",
-             ncol = 4) +
+             ncol = 4, scales = "free_y") +
   facetted_pos_scales(
     y = rep(list(
       scale_y_continuous(limits = c(-80, 60)),
@@ -487,20 +506,8 @@ perc_increase3 %>%
       scale_y_continuous(limits = c(0, 2300))
     ), each = 4)
   ) +
-    scale_color_viridis_c(option = "H",
+  scale_color_viridis_c(option = "H",
                         limits = c(-85, 2300)) +
-  geom_richtext(
-    data = perc_increase3 %>% 
-                  filter(!is.na(ton)),
-    mapping = aes(label = ton), show.legend = FALSE,
-    family = "lato",
-    fontface = "bold",
-    color = "2",
-    size = 8,
-    fill = NA, 
-    label.color = NA,
-    hjust = 0
-  ) +
   labs(y = "% active ingrediente increase",
        x = NULL, color = "% increase") +
   theme_bw(base_family = "lato") +
@@ -511,16 +518,53 @@ perc_increase3 %>%
         legend.direction = "horizontal",
         legend.key.height = unit(0.7,"cm"),
         legend.key.width = unit(0.9,"cm"),
+        legend.key.size = unit(0.2, "cm"),
         legend.title = element_text(face = "bold", size = 30),
         legend.text = element_text(face = "bold", size = 30, 
-                                   margin = margin(b = 0, unit = 'cm')),
+                                   margin = margin(t = 0.1, 
+                                                   b = 0.1, unit = "pt")),
         strip.text.x = element_markdown(face="bold", size = 35) 
         ) +
   guides(colour = guide_colourbar(title.position="top", 
                                   frame.colour = "black",
-                                  order = 1)) #,
-#         size = guide_legend(title.position="top", order = 2))
+                                  order = 1)) -> fig1
+# facet_wrap2(vars(ingrediente_ativo1), 
+ #            scales = "free_y",
+ #            ncol = 4, as.table = TRUE,
+ #            axes = "full", remove_labels = "all") +
+```
 
+
+```{r warning = FALSE}
+fig1 +
+  geom_richtext(
+    data = perc_increase5 %>% 
+                  filter(!is.na(ton)),
+    mapping = aes(label = ton), show.legend = FALSE,
+    family = "lato",
+    fontface = "bold",
+    color = "2",
+    size = 8,
+    fill = NA, 
+    label.color = NA,
+    hjust = 0
+  ) +
+    geom_richtext(
+    data = perc_increase6,
+    mapping = aes(label = ton4), show.legend = FALSE,
+    family = "lato",
+    fontface = "bold",
+    color = "2",
+    size = 8,
+    fill = NA, 
+    label.color = NA,
+    hjust = 0
+  ) +
+   geom_richtext(data = perc_increase5, mapping = aes(x = 2012, y = 50, label = label), 
+                 fill = NA, label.color = NA, 
+                 fontface = "bold",
+                 size = 8, color = 2,
+                 inherit.aes = FALSE) 
 
 ggsave("Figure 2.png", height = 12, width = 9)
 ```
@@ -576,7 +620,7 @@ soa_total %>%
   theme(legend.position = "none") -> fig_perc
 
 
-ggsave("Figure 3.png", width = 5)
+#ggsave("Figure 3.png", width = 5)
 ```
 
 
@@ -616,6 +660,7 @@ library(ggbump)
 library(cowplot)
 library(fishualize)
 ```
+
 ```{r}
 soa_total %>% 
   mutate(herbicide = fct_recode(herbicide, 
@@ -626,9 +671,19 @@ soa_total %>%
                                 "Glutamine" = "Glutamina")) -> soa_total1
 ```
 
+```{r}
+colors <- c("#78A8D1",  "#EFBF6A", "#AF7366", "#CDD4E4",  "#E7CDC2",
+            "#CF9FFF", "#B2AAA2", "#B18147", "#C9BDA3", "#FF9999",
+            "#a2e665")
+```
+
+```{r}
+dutchmasters$view_of_Delft
+```
 
 
 ```{r}
+#library(dutchmasters)
 soa_total1 %>% 
   group_by(year) %>% 
   arrange(desc(total_ha_soa)) %>% 
@@ -645,28 +700,32 @@ soa_total2 %>%
             size = 11, hjust = 1, fontface = "bold") +
   geom_text(data = soa_total2,
             mapping = aes(y = 12, label = mi_ha), 
-            size = 9, hjust = 0.5, color = 1, fontface = "italic") +
+            size = 9, hjust = 0.5, color = "#333333", fontface = "italic") +
   geom_text(data = soa_total2 %>% filter(year == 2015),
             mapping = aes(y = rank, x = year - 1.2, label = rank), 
-            size = 9, hjust = 0.5, color = 1, fontface = "bold") +
+            size = 9, hjust = 0.5, color = "#333333", fontface = "bold") +
   geom_segment(aes(x = 2013.8, y = 11.6, 
                    xend = 2020.8, yend = 11.6),
                color = 1) +
   geom_segment(aes(x = 2013.8, y = 12.4, 
                    xend = 2020.8, yend = 12.4),
-               color = 1) +
-  annotate("text", x = 2014.2, y = 12, color = 1, size = 10, 
+               color = "#333333") +
+  annotate("text", x = 2014.2, y = 12, color = "#333333", size = 10, 
            label = "Total ha", fontface = "italic") +
   geom_point(size = 8) +
   geom_bump(size = 2, smooth = 8) +
   geom_text(data = soa_total2 ,
             mapping = aes(label = perc*100), 
-            size = 10, color = 1) +
+            size = 10, color = "#333333") +
   scale_x_continuous(limits = c(2013.8, 2020.8),
-                     breaks = seq(2015, 2020, 1)) +
+                     breaks = seq(2015, 2020, 1),
+                     labels = c("2014/15", "15/16", "16/17", 
+                              "17/18", "18/19", "19/20")) +
   theme_minimal(base_family = "lato") +
   scale_y_reverse(breaks = seq(0, 12, 1)) +
-  scale_color_brewer(palette = "Paired") +
+  scale_color_manual(values = colors) +
+#  scale_color_brewer(palette = "Paired") +
+#  scale_color_dutchmasters(palette = "little_street") +
   labs(x = NULL, y = NULL) +
   theme(legend.position = "none",
         axis.text.y = element_blank(),
@@ -747,24 +806,51 @@ ggsave("Figure 4A.png", dpi = 300)
 ```
 
 ```{r}
-soa_crop %>%   # 
-  ggplot(aes(x = soa, y = total_ha_soa/1000000, fill = year_season)) +
+soa_crop %>%
+  mutate(soa_mi = round(total_ha_soa/1000000,1)) %>% 
+  filter(soa_mi > 0) %>% 
+  mutate(soa = fct_relevel(soa, levels = c("Others", "DPX", "Glutamine",
+                                           "PSI", "VLCFA", "HPPD", "ACCase",
+                                           "PPO", "ALS", "Auxins", "PSII",
+                                           "EPSPs"))) %>% 
+  mutate(year_season = case_when(
+    year_season == "17/18" ~ "2017/18",
+    year_season == "18/19" ~ "2018/19",
+    TRUE ~  "2019/20")) -> soa_crop1
+```
+
+
+```{r}
+soa_crop1 %>% 
+  ggplot(aes(x = soa, y = soa_mi, 
+             fill = year_season)) +
   geom_bar(stat = "identity",
-           position = position_stack()) +
+           position = position_dodge2(width = 1, reverse = TRUE)) +
   facet_grid(~ crop, scales = "free") +
   coord_flip() +
+  scale_fill_dutchmasters(palette = "pearl_earring",
+                           guide = guide_legend(reverse = TRUE)) +
+  geom_text(data = soa_crop1, mapping = aes(x = soa, y = soa_mi,
+                label = soa_mi), size = 5, hjust = -0.2,
+            position = position_dodge2(width = 1, reverse = TRUE)) +
+  scale_y_continuous(limits = c(0, 155)) +
   labs(x = NULL,
        y = "Million ha",
-       fill = "Herbicide sites of action") +
+       fill = NULL) +
   theme_bw(base_family = "lato") +
-  theme(legend.position = "none",
-        legend.text = element_markdown(size = 20),
-        axis.title = element_markdown(size = 30),
-        axis.text = element_markdown(size = 28),
-        strip.text = element_markdown(face = "bold", size = 30)) +
+  theme(legend.position = c(0.5,0.2),
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.5, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 18),
+        axis.title = element_markdown(size = 26),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) +
   guides(fill = guide_legend(nrow = 6))
 
-ggsave("Figure 4D.png", height = 5, width = 10, dpi = 300)
+ggsave("Figure 4D.png", height = 4, width = 8, dpi = 300)
 ```
 
 
