@@ -827,13 +827,22 @@ soa_crop1 %>%
   geom_bar(stat = "identity",
            position = position_dodge2(width = 1, reverse = TRUE)) +
   facet_grid(~ crop, scales = "free") +
+  facetted_pos_scales(
+    y = rep(list(
+      scale_y_continuous(limits = c(0, 22)),
+      scale_y_continuous(limits = c(0, 8)),
+      scale_y_continuous(limits = c(0, 25)),
+      scale_y_continuous(limits = c(0, 155)),
+      scale_y_continuous(limits = c(0, 13))
+    ), each = 1)
+  ) +
   coord_flip() +
   scale_fill_dutchmasters(palette = "pearl_earring",
                            guide = guide_legend(reverse = TRUE)) +
   geom_text(data = soa_crop1, mapping = aes(x = soa, y = soa_mi,
                 label = soa_mi), size = 5, hjust = -0.2,
             position = position_dodge2(width = 1, reverse = TRUE)) +
-  scale_y_continuous(limits = c(0, 155)) +
+#  scale_y_continuous(limits = c(0, 155)) +
   labs(x = NULL,
        y = "Million ha",
        fill = NULL) +
@@ -848,66 +857,53 @@ soa_crop1 %>%
         axis.title = element_markdown(size = 26),
         axis.text = element_markdown(size = 25),
         strip.text = element_markdown(face = "bold", size = 26)) +
-  guides(fill = guide_legend(nrow = 6))
+  guides(fill = guide_legend(nrow = 6)) -> fig4a
 
-ggsave("Figure 4D.png", height = 4, width = 8, dpi = 300)
+ggsave("Figure 4A.png", height = 4, width = 8, dpi = 300)
 ```
-
-
-
-
-
-
 
 
 ```{r}
-library(ggrepel)
-soa_crop %>%
-  ggplot(aes(x = year, y = total_ha_soa/1000000, color = soa)) +
-  geom_line() +
-  facet_wrap(~ crop, scales = "free", ncol = 2) +
-  geom_text_repel(aes(label = perc),
-                  size = 6,
-                  segment.linetype = "dotted") +
-  geom_text_repel(
-    data = soa_crop %>% 
-                  filter(year == 2019),
-    mapping = aes(color = soa, label = soa),
-    family = "lato",
-    fontface = "bold",
-    size = 8.5,
- #   direction = "y",
- #   xlim = c(2022, NA),
-    hjust = 0.5,
-    segment.size = .3,
-    segment.alpha = .5,
-    segment.linetype = "dotted",
-    box.padding = .4,
-    segment.curvature = -0.1,
-    segment.ncp = 3,
-    segment.angle = 20
-  ) +
+# pat * 1000
+readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_3") %>% 
+  mutate(crop = str_to_title(crop)) %>% 
+  mutate(pat = pat / 1000) -> crop_soa3
+```
+
+```{r}
+crop_soa3 %>% 
+  ggplot(aes(x = crop, y = pat, fill = year)) +
+   geom_bar(stat = "identity",
+           position = position_dodge2(width = 1, reverse = TRUE)) +
+  scale_fill_dutchmasters(palette = "pearl_earring",
+                           guide = guide_legend(reverse = TRUE)) +
+  theme_bw(base_family = "lato") +
   labs(x = NULL,
        y = "Million ha",
-       fill = "Herbicide sites of action") +
-  scale_fill_viridis_d(option = "H", guide = guide_legend(nrow = 2)) +
-  scale_x_continuous(limits = c(2018, 2020),
-                     breaks = c(2018, 2019, 2020), 
-                     labels = c("2017/18", "18/19", "19/20")) +
-  theme_bw(base_family = "lato") +
+       fill = NULL) +
   theme(legend.position = "none",
-        axis.text = element_markdown(size = 30),
-        axis.title = element_markdown(size = 35),
-        panel.grid = element_line(color = "gray96"),
-        legend.direction = "horizontal",
-        legend.key.height = unit(0.7,"cm"),
-        legend.key.width = unit(0.9,"cm"),
-        legend.title = element_text(face = "bold", size = 30),
-        legend.text = element_text(face = "bold", size = 30, 
-                                   margin = margin(b = 0, unit = 'cm')),
-        strip.text.x = element_markdown(face="bold", size = 35)) +
-  guides(fill = guide_legend(nrow = 6))
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.5, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 18),
+        axis.title = element_markdown(size = 26),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) -> fig4b
 
-ggsave("Figure 4C.png", height = 9, width = 6, dpi = 300)
+
+ggsave("Figure 4B.png", height = 4, width = 8, dpi = 300)
 ```
+
+
+```{r}
+fig4b / wrap_elements(full = fig4a)
+
+ggsave("Figure 4.png", height = 9, width = 8, dpi = 300)
+```
+
+
+
+
 
