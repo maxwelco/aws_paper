@@ -761,22 +761,7 @@ soa_crop
 ```
 
 
-```{r}
-soa_crop %>% 
-  ggplot(aes(x = year_season, y = perc, fill = soa)) +
-  geom_bar(stat = "identity", position = "fill") +
-  facet_grid(~ crop) +
-  labs(x = NULL,
-       y = NULL,
-       fill = NULL) +
-  scale_fill_viridis_d(option = "H") +
-  geom_text(soa_crop %>% filter(soa == "EPSPs"),
-            mapping = aes(label = mi_ha), y = 0.5, 
-            angle = 90, color = "gray75") +
-  theme_hc()
 
-ggsave("Figure 4.png")
-```
 
 ```{r}
 library(hrbrthemes)
@@ -821,6 +806,7 @@ soa_crop %>%
 
 
 ```{r}
+library(ggh4x)
 soa_crop1 %>% 
   ggplot(aes(x = soa, y = soa_mi, 
              fill = year_season)) +
@@ -870,12 +856,21 @@ readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_3") %>%
   mutate(pat = pat / 1000) -> crop_soa3
 ```
 
+
+
 ```{r}
 crop_soa3 %>% 
-  ggplot(aes(x = crop, y = pat, fill = year)) +
-   geom_bar(stat = "identity",
-           position = position_dodge2(width = 1, reverse = TRUE)) +
-  scale_fill_dutchmasters(palette = "pearl_earring",
+  ggplot(aes(x = factor(year), y = pat, fill = crop)) +
+   geom_bar(stat = "identity", width = 0.4,
+           position = "stack") +
+  scale_fill_brewer(palette = "Set1") +
+  coord_flip() +
+  theme_bw(base_family = "lato") 
+```
+
+
+```{r}
+scale_fill_dutchmasters(palette = "pearl_earring",
                            guide = guide_legend(reverse = TRUE)) +
   theme_bw(base_family = "lato") +
   labs(x = NULL,
@@ -898,6 +893,7 @@ ggsave("Figure 4B.png", height = 4, width = 8, dpi = 300)
 
 
 ```{r}
+library(patchwork)
 fig4b / wrap_elements(full = fig4a)
 
 ggsave("Figure 4.png", height = 9, width = 8, dpi = 300)

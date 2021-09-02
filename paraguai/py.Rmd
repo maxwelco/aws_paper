@@ -11,23 +11,33 @@ library(tidyverse)
 
 
 ```{r}
+options(scipen = 999)
 readxl::read_excel("herbicidas_paraguai.xlsx", sheet = "Resumo Final") %>% 
-  janitor::row_to_names(row_number = 1) %>% 
-  pivot_longer(c(`2018`, `2019`, `2020`), names_to = "year", values_to = "value") %>% 
   janitor::clean_names() %>% 
-  mutate(producto = str_remove(producto, " TECNICO"),
-         producto = str_to_lower(producto)) %>% 
-  mutate(total_general = as.double(total_general),
-         value = as.double(value)) %>% 
+  dplyr::select(1:4) %>% 
+  pivot_longer(c(`x2018_kg_ia`, `x2019_kg_ia`, `x2020_kg_ia`), 
+               names_to = "year", values_to = "value") %>% 
+  mutate(year = extract_numeric(year)) %>% 
+  mutate(producto = str_to_lower(producto)) %>% 
   mutate(year = as.double(year)) %>% 
   mutate_if(is.double, ~round(., 1)) -> py
 ```
 
 ```{r}
 py %>% 
-  ggplot(aes(x = year, y = value, color = producto)) +
-  geom_point() 
+#  filter(producto != "total general") %>% 
+  ggplot(aes(x = year, y = value/1000, fill = producto)) +
+  geom_bar(stat = "identity", position = position_dodge2(width = 0.4)) +
+  facet_wrap(~ producto, nrow = 5, scales = "free") +
+  coord_flip() +
+  labs(x = NULL,
+       y = "Active ingredient (ton)") +
+  theme_few() +
+  theme(legend.position = "none",
+        axis.title = element_markdown(size = 27),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(size = 25))
 
-ggsave("py.png", width = 12)
+ggsave("py.png", height = 10)
 ```
 
