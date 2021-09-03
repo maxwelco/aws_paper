@@ -644,7 +644,9 @@ total_ha %>%
         axis.ticks = element_blank()) -> fig_ha
 ```
 
+
 ```{r}
+library(patchwork)
 fig_ha / fig_perc +
   plot_layout(heights = c(1, 3)) 
 
@@ -853,19 +855,35 @@ ggsave("Figure 4A.png", height = 4, width = 8, dpi = 300)
 # pat * 1000
 readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_3") %>% 
   mutate(crop = str_to_title(crop)) %>% 
-  mutate(pat = pat / 1000) -> crop_soa3
+  mutate(pat = pat / 1000) %>% 
+  ungroup() %>% 
+  mutate(crop = fct_relevel(crop, levels = c("Other Crops", "Cotton", "Pasture",   
+                                              "Sugarcane", "Corn", "Soybean"))) -> crop_soa3
 ```
 
 
 
 ```{r}
-crop_soa3 %>% 
+crop_soa3  %>% 
   ggplot(aes(x = factor(year), y = pat, fill = crop)) +
    geom_bar(stat = "identity", width = 0.4,
-           position = "stack") +
-  scale_fill_brewer(palette = "Set1") +
+           position = position_stack()) +
+  scale_fill_calc() +
+  labs(x = NULL, y = "ton") +
+  geom_text(aes(label = round(pat,0)), 
+            position = position_stack(vjust = 0.5), 
+            fontface = "bold", size = 9) +
   coord_flip() +
-  theme_bw(base_family = "lato") 
+  theme_bw(base_family = "lato") +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        legend.text = element_markdown(size = 25),
+        legend.direction = "horizontal",
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35)) +
+  guides(fill = guide_legend(nrow = 2))
+
+ggsave("Figure 4A.png", width = 5, height = 5)
 ```
 
 
