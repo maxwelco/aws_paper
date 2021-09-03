@@ -800,6 +800,9 @@ soa_crop %>%
                                            "PSI", "VLCFA", "HPPD", "ACCase",
                                            "PPO", "ALS", "Auxins", "PSII",
                                            "EPSPs"))) %>% 
+  ungroup() %>% 
+  mutate(crop = fct_relevel(crop, levels = c("Soybean", "Pasture", "Corn",
+                                             "Sugarcane", "Cotton"))) %>% 
   mutate(year_season = case_when(
     year_season == "17/18" ~ "2017/18",
     year_season == "18/19" ~ "2018/19",
@@ -813,41 +816,42 @@ soa_crop1 %>%
   ggplot(aes(x = soa, y = soa_mi, 
              fill = year_season)) +
   geom_bar(stat = "identity",
-           position = position_dodge2(width = 1, reverse = TRUE)) +
+           position = position_dodge2(width = 1, reverse = FALSE)) +
   facet_grid(~ crop, scales = "free") +
   facetted_pos_scales(
     y = rep(list(
-      scale_y_continuous(limits = c(0, 22)),
-      scale_y_continuous(limits = c(0, 8)),
-      scale_y_continuous(limits = c(0, 25)),
       scale_y_continuous(limits = c(0, 155)),
-      scale_y_continuous(limits = c(0, 13))
+      scale_y_continuous(limits = c(0, 25)),
+      scale_y_continuous(limits = c(0, 22)),
+      scale_y_continuous(limits = c(0, 13)),
+      scale_y_continuous(limits = c(0, 8))
     ), each = 1)
   ) +
   coord_flip() +
-  scale_fill_dutchmasters(palette = "pearl_earring",
-                           guide = guide_legend(reverse = TRUE)) +
+#  scale_fill_dutchmasters(palette = "pearl_earring",
+#                           guide = guide_legend(reverse = TRUE)) +
+  scale_fill_colorblind(labels = c("2017/18", "18/19", "19/20")) +
   geom_text(data = soa_crop1, mapping = aes(x = soa, y = soa_mi,
                 label = soa_mi), size = 5, hjust = -0.2,
-            position = position_dodge2(width = 1, reverse = TRUE)) +
+            position = position_dodge2(width = 1, reverse = FALSE)) +
 #  scale_y_continuous(limits = c(0, 155)) +
   labs(x = NULL,
        y = "Million ha",
        fill = NULL) +
   theme_bw(base_family = "lato") +
-  theme(legend.position = c(0.5,0.2),
+  theme(legend.position = c(0.3,0.2),
         legend.background = element_rect(colour = NA, fill = NA),
         legend.key = element_rect(colour = NA, fill = NA),
-        legend.key.size = unit(0.5, "lines"),
+        legend.key.size = unit(0.7, "lines"),
         legend.title = element_markdown(size = 20, face = "bold", 
                                         lineheight = 0.2),
-        legend.text = element_markdown(size = 18),
-        axis.title = element_markdown(size = 26),
+        legend.text = element_markdown(size = 22),
+        axis.title = element_markdown(size = 30),
         axis.text = element_markdown(size = 25),
         strip.text = element_markdown(face = "bold", size = 26)) +
-  guides(fill = guide_legend(nrow = 6)) -> fig4a
+  guides(fill = guide_legend(nrow = 3, reverse = TRUE)) -> fig4a
 
-ggsave("Figure 4A.png", height = 4, width = 8, dpi = 300)
+ggsave("Figure 4B.png", height = 4, width = 8, dpi = 300)
 ```
 
 
@@ -869,53 +873,70 @@ crop_soa3  %>%
    geom_bar(stat = "identity", width = 0.4,
            position = position_stack()) +
   scale_fill_calc() +
-  labs(x = NULL, y = "ton") +
+  labs(x = NULL, y = "Million ha") +
   geom_text(aes(label = round(pat,0)), 
             position = position_stack(vjust = 0.5), 
             fontface = "bold", size = 9) +
+  scale_x_discrete(expand = c(0.1, 0.1),
+                   labels = c("2017/18", "18/19", "19/20")) +
   coord_flip() +
+  annotate("text", x = 1.7, y = 20, size = 10, label = "Soybean", 
+           color = "#83caff", fontface = "bold") +
+  geom_curve(x = 2, y = 50, 
+                   xend = 1.7, yend = 44,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "#83caff") + 
+  annotate("text", x = 2.31, y = 170, size = 10, label = "Corn",
+           color = "#7e0021", fontface = "bold") +
+  geom_curve(x = 2.1, y = 175, 
+                   xend = 2.27, yend = 170,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "#7e0021") + 
+  annotate("text", x = 1.7, y = 197, size = 10, label = "Sugarcane",
+           color = "#579d1c", fontface = "bold") +
+  geom_curve(x = 2, y = 210, 
+                   xend = 1.73, yend = 200,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "#579d1c") + 
+  annotate("text", x = 2.31, y = 240, size = 10, label = "Pasture",
+           color = "#ffd320", fontface = "bold") +
+  geom_curve(x = 2.1, y = 235, 
+                   xend = 2.27, yend = 240,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "#ffd320") + 
+  annotate("text", x = 1.7, y = 258, size = 10, label = "Cotton",
+           color = "#ff420e", fontface = "bold") +
+  geom_curve(x = 1.9, y = 255, 
+                   xend = 1.73, yend = 253,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "#ff420e") + 
+  annotate("text", x = 2.31, y = 293, size = 10, label = "Other crops",
+           color = "#004586", fontface = "bold") +
+  geom_curve(x = 2.1, y = 280, 
+                   xend = 2.27, yend = 293,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "#004586") + 
   theme_bw(base_family = "lato") +
-  theme(legend.position = "bottom",
+  theme(legend.position = "none",
         legend.title = element_blank(),
         legend.text = element_markdown(size = 25),
         legend.direction = "horizontal",
-        axis.text = element_markdown(size = 30),
+        axis.text.y = element_markdown(size = 30),
+        axis.text.x = element_markdown(size = 30),
         axis.title = element_markdown(size = 35)) +
   guides(fill = guide_legend(nrow = 2))
 
 ggsave("Figure 4A.png", width = 5, height = 5)
 ```
-
-
 ```{r}
-scale_fill_dutchmasters(palette = "pearl_earring",
-                           guide = guide_legend(reverse = TRUE)) +
-  theme_bw(base_family = "lato") +
-  labs(x = NULL,
-       y = "Million ha",
-       fill = NULL) +
-  theme(legend.position = "none",
-        legend.background = element_rect(colour = NA, fill = NA),
-        legend.key = element_rect(colour = NA, fill = NA),
-        legend.key.size = unit(0.5, "lines"),
-        legend.title = element_markdown(size = 20, face = "bold", 
-                                        lineheight = 0.2),
-        legend.text = element_markdown(size = 18),
-        axis.title = element_markdown(size = 26),
-        axis.text = element_markdown(size = 25),
-        strip.text = element_markdown(face = "bold", size = 26)) -> fig4b
-
-
-ggsave("Figure 4B.png", height = 4, width = 8, dpi = 300)
+library(scales)
+show_col(calc_pal()(6))
 ```
 
 
-```{r}
-library(patchwork)
-fig4b / wrap_elements(full = fig4a)
 
-ggsave("Figure 4.png", height = 9, width = 8, dpi = 300)
-```
+
+
 
 
 
