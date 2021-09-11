@@ -7,6 +7,12 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(ggthemes)
+library(ggtext)
+library(extrafont)
+library(showtext)
+showtext_auto()
+font_add_google("Lato", "lato") 
 ```
 
 
@@ -25,14 +31,31 @@ readxl::read_excel("herbicidas_paraguai.xlsx", sheet = "Resumo Final") %>%
 
 ```{r}
 py %>% 
+  filter(!producto %in% c("total general", "dimetilamina", "outros")) %>% 
+  mutate(producto = fct_relevel(producto,
+                                levels = c("glifosato", "paraquat", "2,4-d",
+                                           "cletodim", "glufosinato", "triclopir",
+                                           "atrazina", "haloxifop-p- metil",
+                                           "diuron", "fomesafen", "simazina",
+                                           "picloram", "imazetapyr", "dicamba",
+                                           "diclosulam", "flumioxazin", "fluroxipir", 
+                                           "outros"))) -> py1
+```
+
+
+```{r}
+py1 %>% 
 #  filter(producto != "total general") %>% 
   ggplot(aes(x = year, y = value/1000, fill = producto)) +
-  geom_bar(stat = "identity", position = position_dodge2(width = 0.4)) +
+  geom_bar(stat = "identity", width = 0.5,
+           position = position_dodge2(width = 0.4)) +
   facet_wrap(~ producto, nrow = 5, scales = "free") +
-  coord_flip() +
+#  coord_flip() +
+  scale_x_continuous(breaks = seq(2018, 2020, by = 1)) +
+  geom_text(aes(label = round(value/1000,0)), size = 8) +
   labs(x = NULL,
        y = "Active ingredient (ton)") +
-  theme_few() +
+  theme_few(base_family = "lato") +
   theme(legend.position = "none",
         axis.title = element_markdown(size = 27),
         axis.text = element_markdown(size = 25),
