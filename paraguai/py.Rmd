@@ -33,12 +33,12 @@ readxl::read_excel("herbicidas_paraguai.xlsx", sheet = "Resumo Final") %>%
 py %>% 
   filter(!producto %in% c("total general", "dimetilamina", "outros")) %>% 
   mutate(producto = fct_relevel(producto,
-                                levels = c("glifosato", "paraquat", "2,4-d",
-                                           "cletodim", "glufosinato", "triclopir",
-                                           "atrazina", "haloxifop-p- metil",
-                                           "diuron", "fomesafen", "simazina",
-                                           "picloram", "imazetapyr", "dicamba",
-                                           "diclosulam", "flumioxazin", "fluroxipir"))) -> py1
+                                levels = c("fluroxipir", "flumioxazin", "diclosulam",
+                                           "dicamba", "imazetapyr", "picloram",
+                                           "simazina","fomesafen", "diuron",
+                                           "haloxifop-p- metil", "atrazina", "triclopir",
+                                           "glufosinato", "cletodim", "paraquat", 
+                                           "2,4-d", "glifosato"))) -> py1
 ```
 
 ```{r}
