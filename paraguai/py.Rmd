@@ -50,7 +50,7 @@ py1 %>%
                                "clethodim" = "cletodim",
                                "glufosinate" = "glufosinato",
                                "triclopyr" = "triclopir",
-                               "holoxifop" = "haloxifop-p- metil",
+                               "haloxyfop" = "haloxifop-p- metil",
                                "diuron" = "diuron",
                                "fomesafen" = "fomesafen",
                                "simazine" = "simazina",
@@ -74,7 +74,7 @@ py2 %>%
   scale_fill_viridis_d(option = "E") +
   scale_x_continuous(breaks = seq(2018, 2020, by = 1)) +
   geom_text(aes(label = round(value/1000,0)), size = 9, 
-            position = position_nudge(y = 0), color = 2) +
+            position = position_nudge(y = 0), color = 2, fontface = "bold") +
   labs(x = NULL,
        y = "Active ingredient (kg × 1000)") +
   theme_bw(base_family = "lato") +
