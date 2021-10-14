@@ -744,9 +744,10 @@ ggsave("Figure 3.png", bg = "gray96")
 
 
 ```{r}
-readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_2") %>% 
-  mutate(perc = perc / 100,
-         total_ha_soa = total_ha * perc) %>% 
+readxl::read_excel("../spark/spark_2.xlsx", sheet = "spark_2") %>% 
+  mutate(perc_soa = perc_soa / 100,
+         perc_crop = perc_crop / 100,
+         total_ha_soa = total_ha_season * perc_soa * perc_crop) %>% 
   mutate(crop = str_to_title(crop)) %>% 
   mutate(mi_ha = round(total_ha_soa / 1000000, 5),
          mi_ha = str_glue("{mi_ha} mi ha")) %>% 
@@ -820,11 +821,11 @@ soa_crop1 %>%
   facet_grid(~ crop, scales = "free") +
   facetted_pos_scales(
     y = rep(list(
-      scale_y_continuous(limits = c(0, 155)),
-      scale_y_continuous(limits = c(0, 25)),
-      scale_y_continuous(limits = c(0, 22)),
-      scale_y_continuous(limits = c(0, 13)),
-      scale_y_continuous(limits = c(0, 8))
+      scale_y_continuous(limits = c(0, 100)),
+      scale_y_continuous(limits = c(0, 5)),
+      scale_y_continuous(limits = c(0, 5)),
+      scale_y_continuous(limits = c(0, 2.5)),
+      scale_y_continuous(limits = c(0, 0.5))
     ), each = 1)
   ) +
   coord_flip() +
@@ -853,6 +854,44 @@ soa_crop1 %>%
 
 ggsave("Figure 4B.png", height = 4, width = 8, dpi = 300)
 ```
+
+
+```{r}
+library(gtExtras)
+library(gt)
+```
+
+
+```{r}
+soa_crop1 |> 
+  dplyr::select(crop, soa, year_season, soa_mi) |> 
+  pivot_wider(id_cols = c(crop, year_season),
+              names_from = soa, values_from = soa_mi) |> 
+  rename(season = year_season) |> 
+  dplyr::select(crop, season, ACCase, Auxins, ALS, DPX, EPSPs,
+                Glutamine, HPPD, PPO, PSI, PSII, VLCFA, Others) |> 
+  mutate(Total = rowSums(across(where(is.numeric)), na.rm = TRUE)) |> 
+  mutate(season = fct_recode(season,
+                             "18/19" = "2018/19",
+                             "19/20" = "2019/20")) |> 
+#  mutate_if(is.double, ~replace_na(., 0)) |> 
+  gt(groupname_col = "crop") |> 
+  gt_theme_538() |> 
+  tab_footnote(
+    footnote = "gray cells means no data available",
+    locations = cells_column_labels(
+      columns = c(3,5:14)
+    )) |> 
+  gt_hulk_col_numeric(3:15, trim = TRUE) |> 
+  fmt_missing(3:14, missing_text = "") |> 
+  tab_spanner(
+    label = "Million ha",
+    columns = c(3:15)) -> table
+
+gtsave(table, "table.png")
+```
+
+
 
 
 ```{r}
