@@ -744,7 +744,7 @@ ggsave("Figure 3.png", bg = "gray96")
 
 
 ```{r}
-readxl::read_excel("../spark/spark_2.xlsx", sheet = "spark_2") %>% 
+readxl::read_excel("../spark/spark_3.xlsx", sheet = "spark_2") %>% 
   mutate(perc_soa = perc_soa / 100,
          perc_crop = perc_crop / 100,
          total_ha_soa = total_ha_season * perc_soa * perc_crop) %>% 
@@ -807,7 +807,8 @@ soa_crop %>%
   mutate(year_season = case_when(
     year_season == "17/18" ~ "2017/18",
     year_season == "18/19" ~ "2018/19",
-    TRUE ~  "2019/20")) -> soa_crop1
+    TRUE ~  "2019/20")) |> 
+  mutate(crop_area = round(crop_area, 1)) -> soa_crop1
 ```
 
 
@@ -864,29 +865,39 @@ library(gt)
 
 ```{r}
 soa_crop1 |> 
-  dplyr::select(crop, soa, year_season, soa_mi) |> 
-  pivot_wider(id_cols = c(crop, year_season),
+  dplyr::select(crop, crop_area, soa, year_season, soa_mi) |> 
+  pivot_wider(id_cols = c(crop, year_season, crop_area),
               names_from = soa, values_from = soa_mi) |> 
   rename(season = year_season) |> 
-  dplyr::select(crop, season, ACCase, Auxins, ALS, DPX, EPSPs,
+  dplyr::select(crop, season, crop_area, ACCase, Auxins, ALS, DPX, EPSPs,
                 Glutamine, HPPD, PPO, PSI, PSII, VLCFA, Others) |> 
-  mutate(Total = rowSums(across(where(is.numeric)), na.rm = TRUE)) |> 
+  mutate(Total = rowSums(across(where(is.numeric)), na.rm = TRUE) - crop_area) |> 
   mutate(season = fct_recode(season,
                              "18/19" = "2018/19",
                              "19/20" = "2019/20")) |> 
 #  mutate_if(is.double, ~replace_na(., 0)) |> 
+  rename(`Crop area` = crop_area,
+         `Total SOA` = Total) |> 
   gt(groupname_col = "crop") |> 
   gt_theme_538() |> 
   tab_footnote(
+    footnote = "Source: Conab and IBGE",
+    locations = cells_column_labels(
+      columns = `Crop area`
+    )) |> 
+  tab_footnote(
     footnote = "gray cells means no data available",
     locations = cells_column_labels(
-      columns = c(3,5:14)
+      columns = c(4,6:15)
     )) |> 
-  gt_hulk_col_numeric(3:15, trim = TRUE) |> 
-  fmt_missing(3:14, missing_text = "") |> 
+  gt_hulk_col_numeric(4:16, trim = TRUE) |> 
+  fmt_missing(3:16, missing_text = "") |> 
+  tab_spanner(
+    label = "Herbicide Sites of Action",
+    columns = c(4:15)) |> 
   tab_spanner(
     label = "Million ha",
-    columns = c(3:15)) -> table
+    columns = c(3:16)) -> table
 
 gtsave(table, "table.png")
 ```

@@ -1,0 +1,73 @@
+---
+title: "argentina"
+author: "Maxwel Coura Oliveira"
+date: "10/15/2021"
+output: html_document
+---
+
+```{r}
+library(gtExtras)
+library(gt)
+library(tidyverse)
+```
+
+
+```{r}
+readxl::read_excel("argentina.xlsx", sheet = "herbicide") |> 
+  mutate(`Treated ha` =  round(`Treated ha` / 1000000, 2)) |> 
+  mutate(`Harvested ha` = round(`Harvested ha` / 1000000,2)) |> 
+  mutate(`% of treated` = round((`Treated ha` / `Harvested ha`) * 100,0)) |> 
+  rename(`Treated` = `Treated ha` , 
+         `Harvested` = `Harvested ha`) |> 
+  arrange(Crop) -> ar_table
+```
+
+```{r}
+ar_table   |> 
+  gt() |> 
+  gt_theme_538() |> 
+  tab_footnote(
+    footnote = "Marsico 1980",
+    locations = cells_column_labels(
+      columns = 1
+    )) |> 
+  tab_footnote(
+    footnote = "Data from MAGyP",
+    locations = cells_column_labels(
+      columns = 3
+    )) |> 
+  tab_spanner(
+    label = "Million ha",
+    columns = c(2,3)) -> table1
+
+
+gtsave(table1, "table1.png")
+```
+
+
+
+```{r}
+readxl::read_excel("argentina.xlsx", sheet = "soa") |> 
+  mutate(Nineties = fct_recode(Nineties,
+                               "Glyphosate (EPSPS)" = "Glyphosate* (EPSPS)")) -> ar_table2
+```
+
+
+
+
+```{r}
+ar_table2 |> 
+  gt() |> 
+  gt_theme_538() -> table2
+
+gtsave(table2, "table2.png")
+```
+|> 
+  tab_footnote(
+    footnote = md("In glyphosate resistant-soybean"),
+    locations = cells_stub("Glyphosate (EPSPS)")
+  )
+
+
+
+
