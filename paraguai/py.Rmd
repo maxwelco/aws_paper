@@ -86,3 +86,45 @@ py2 %>%
 ggsave("py.png", height = 10)
 ```
 
+
+```{r}
+py2 |> 
+  ggplot(aes(x = producto, y = value/1000, fill = as_factor(year))) +
+  geom_bar(stat = "identity", position = position_dodge2(width = 1,
+                                                        preserve = "total",
+                                                        #reverse = TRUE,
+                                                        padding = 0.2)) +
+  coord_flip() +
+  geom_text(aes(label = round(value/1000,0)), size = 9, 
+            position = position_dodge(width = 1), 
+            color = "#333333", hjust = -0.2, fontface = "bold") +
+  ylim(0, 5000) +
+  labs(x = NULL,
+       y = "kg of active ingredient (× 1000)") +
+  scale_fill_manual(name = NULL, values = c(2,3,4),
+                    guide = guide_legend(reverse = TRUE)) +
+  theme_bw(base_family = "lato") +
+  theme(legend.position = c(0.9, 0.5),
+        legend.text = element_text(size = 35),
+        legend.background = element_blank(),
+        axis.title = element_markdown(size = 35),
+        axis.text = element_markdown(size = 35),
+        strip.text = element_markdown(size = 35, face = "bold"))
+
+ggsave("py2.png", height = 10)
+```
+
+
+```{r}
+library(gtExtras)
+library(gt)
+```
+
+```{r}
+py2 |> 
+  group_by(producto) |> 
+  summarize(value_data = list(value), .groups = "drop") |> 
+  gt()  |> 
+  gt_sparkline(value_data, type = "sparkline",)
+```
+

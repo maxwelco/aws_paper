@@ -881,23 +881,20 @@ soa_crop1 |>
   gt(groupname_col = "crop") |> 
   gt_theme_538() |> 
   tab_footnote(
-    footnote = "Source: Conab and IBGE",
+    footnote = "All values in million ha; Source: Conab and IBGE",
     locations = cells_column_labels(
-      columns = `Crop area`
+      columns = `season`
     )) |> 
-  tab_footnote(
-    footnote = "gray cells means no data available",
-    locations = cells_column_labels(
-      columns = c(4,6:15)
-    )) |> 
-  gt_hulk_col_numeric(4:16, trim = TRUE) |> 
+#  tab_footnote(
+#    footnote = "gray cells means no data available",
+#    locations = cells_column_labels(
+#      columns = c(4,6:15)
+#    )) |> 
+#  gt_hulk_col_numeric(3:16, trim = TRUE) |> 
   fmt_missing(3:16, missing_text = "") |> 
   tab_spanner(
     label = "Herbicide Sites of Action",
-    columns = c(4:15)) |> 
-  tab_spanner(
-    label = "Million ha",
-    columns = c(3:16)) -> table
+    columns = c(4:15)) -> table
 
 gtsave(table, "table.png")
 ```
