@@ -54,7 +54,7 @@ all_col_names <- c(
   "outros"
 )
 
-tab_names <- fwf_empty(
+tab_names <- vroom::fwf_empty(
   table_trimmed,
   col_names = all_col_names
 )

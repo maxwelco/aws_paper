@@ -1,0 +1,56 @@
+---
+title: "final analyses"
+author: "Maxwel Coura Oliveira"
+date: "10/21/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(pdftools)
+library(ggthemes)
+library(ggtext)
+library(ggtext)
+```
+
+```{r}
+library(extrafont)
+library(showtext)
+showtext_auto()
+font_add_google("Roboto", "roboto") 
+```
+
+```{r}
+raw_pdf <- pdftools::pdf_text("vendas_hist.pdf")
+```
+
+
+```{r}
+raw_text <- raw_pdf[[1]] %>% 
+  str_split("\n") %>% 
+  unlist()
+```
+
+```{r}
+table_trimmed <- raw_text %>% 
+  .[13:(length(raw_text)-1)] %>% 
+  str_trim()
+```
+
+
+```{r}
+all_col_names <- c(
+  "year",
+  "total",
+  "herbicida",
+  "fungicida",
+  "inseticida",
+  "acaricida",
+  "outros"
+)
+
+tab_names <- fwf_empty(
+  file = table_trimmed,
+  col_names = NULL
+)
+```
