@@ -7,9 +7,7 @@ output: html_document
 
 ```{r}
 library(tidyverse)
-library(pdftools)
 library(ggthemes)
-library(ggtext)
 library(ggtext)
 ```
 
@@ -578,9 +576,7 @@ colors <- c("#78A8D1",  "#EFBF6A", "#AF7366", "#CDD4E4",  "#E7CDC2",
             "#a2e665")
 ```
 
-```{r}
-dutchmasters$view_of_Delft
-```
+
 
 
 ```{r}
@@ -705,15 +701,12 @@ soa_crop1 %>%
     ), each = 1)
   ) +
   coord_flip() +
-#  scale_fill_dutchmasters(palette = "pearl_earring",
-#                           guide = guide_legend(reverse = TRUE)) +
   scale_fill_colorblind(labels = c("2017/18", "18/19", "19/20")) +
   scale_color_colorblind() +
   geom_text(data = soa_crop1, mapping = aes(x = soa, y = soa_mi,
                 label = soa_mi, color = year_season), size = 6, hjust = -0.2,
             position = position_dodge2(width = 1, reverse = FALSE),
             show.legend = FALSE) +
-#  scale_y_continuous(limits = c(0, 155)) +
   labs(x = NULL,
        y = "Million ha",
        fill = NULL,
