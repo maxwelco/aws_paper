@@ -95,37 +95,25 @@ py2 |>
                                                         #reverse = TRUE,
                                                         padding = 0.2)) +
   coord_flip() +
-  geom_text(aes(label = round(value/1000,0), color = as_factor(year)), size = 9, 
+  geom_text(aes(label = round(value/1000,0), color = as_factor(year)), size = 12, 
             position = position_dodge(width = 1), 
             hjust = -0.2, fontface = "bold", show.legend = FALSE) +
   ylim(0, 5000) +
   labs(x = NULL,
-       y = "kg of active ingredient (× 1000)") +
+       y = "kg of active ingredient (× 1000)",
+       caption = "**Source:** OCIT, 2021") +
   scale_fill_colorblind(guide = guide_legend(reverse = TRUE)) +
   scale_color_colorblind() +
   theme_bw() +
   theme(legend.position = c(0.9, 0.5),
         legend.title = element_blank(),
-        legend.text = element_text(size = 35),
+        legend.text = element_text(size = 40),
         legend.background = element_blank(),
-        axis.title = element_markdown(size = 35),
-        axis.text = element_markdown(size = 35),
-        strip.text = element_markdown(size = 35, face = "bold"))
+        axis.title = element_markdown(size = 47),
+        plot.caption = element_markdown(size = 25, color = "#333333"),
+        axis.text = element_markdown(size = 47))
 
-ggsave("py2.png", height = 10)
+ggsave("py2.png", height = 12)
 ```
 
-
-```{r}
-library(gtExtras)
-library(gt)
-```
-
-```{r}
-py2 |> 
-  group_by(producto) |> 
-  summarize(value_data = list(value), .groups = "drop") |> 
-  gt()  |> 
-  gt_sparkline(value_data, type = "sparkline",)
-```
 

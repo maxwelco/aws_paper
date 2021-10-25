@@ -20,52 +20,132 @@ showtext_auto()
 font_add_google("Roboto", "roboto") 
 ```
 
+
 ```{r}
-raw_pdf <- pdftools::pdf_text("vendas_hist.pdf")
+library(tabulizer)
+extract_tables('vendas_hist.pdf', pages = 1) -> tab1
+extract_tables('vendas_hist.pdf', pages = 2) -> tab2
 ```
 
 
 ```{r}
-raw_text <- raw_pdf[[1]] %>% 
-  str_split("\n") %>% 
-  unlist()
-```
+tab1 |> 
+  as.data.frame() |> 
+  janitor::row_to_names(row_number = 1) |> 
+  as_tibble() -> tab11
 
-```{r}
-table_trimmed <- raw_text %>% 
-  .[13:(length(raw_text)-1)] %>% 
-  str_trim()
-```
-
-
-```{r}
-all_col_names <- c(
-  "year",
-  "total",
-  "herbicida",
-  "fungicida",
-  "inseticida",
-  "acaricida",
-  "outros"
-)
-
-tab_names <- fwf_empty(
-  file = table_trimmed,
-  col_names = all_col_names
-)
+tab2 |> 
+  as.data.frame() |> 
+  rename(ANO = X1,
+         TOTAL  = X2,
+         Herbicidas = X3,
+         Fungicidas = X4,
+         Inseticidas = X5,
+         Acaricidas = X6,
+         `Outras (*)` = X7) |> 
+  as_tibble() -> tab22
 ```
 
 
 ```{r}
-table_trimmed |> 
-  as_tibble(col_names = all_col_names)
+tab11 |> 
+  bind_rows(tab22) |> 
+  as_tibble() |> 
+  janitor::clean_names() |> 
+  mutate_if(is_character, ~ str_remove_all(., "\\.")) %>% 
+  mutate_if(is.double, ~ str_remove_all(., "\\.")) %>% 
+  mutate_if(is_character, as.double) |> 
+  rename(year = ano) -> vendas
+```
+
+Crop harvest - FAO
+
+
+```{r}
+read_csv("../fao/crop_harvest.csv") %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(value)) %>% 
+  group_by(year) %>% 
+  summarise(area = sum(value)) -> area_br
+```
+```{r}
+read_csv("../fao/herbicide_fao.csv")  %>% 
+  dplyr::select(Year, Unit, Value) %>% 
+  janitor::clean_names() %>% 
+  left_join(area_br, by = "year") %>% 
+  mutate(rate = (value * 1000) / area) %>% 
+  mutate(type =  "herbicide") -> rate_herbicide
+```
+
+
+# IBGE
+
+```{r eval = FALSE}
+readxl::read_excel("../IBGE/area_colhida.xlsx") %>% 
+  janitor::row_to_names(row_number = 3) %>% 
+  janitor::clean_names() %>% 
+  drop_na() %>% 
+  pivot_longer(cols = c("x1974":"x2019"), names_to = "year", values_to = "harvest_ha") %>% 
+  rename(location = na) %>% 
+  mutate(year = str_remove_all(year, "x")) %>% 
+  mutate_at(c("year", "harvest_ha"), as.double)
 ```
 
 
 
+```{r}
+vendas %>% 
+  left_join(area_br, by = "year") %>% 
+  mutate(pesticide = fungicidas + inseticidas + acaricidas) %>% 
+  pivot_longer(cols = c(3:6, pesticide), names_to = "type", values_to = "value")  %>%
+  mutate(rate_herb = (value * 1000) / area) -> pest_sales
+```
 
 
-
+```{r}
+pest_sales %>% 
+  filter(type != "pesticide") %>% 
+ggplot(aes(x = year, y = rate_herb, color = type, 
+             fill = type, shape = type)) +
+  geom_point() +
+  geom_line(alpha = 0.5) +
+  scale_y_continuous(limits = c(0, 60)) +
+  scale_x_continuous(limits = c(1978, 2020), 
+                     breaks = seq(1980, 2020, by = 10)) +
+  labs(y = expression(paste("Pesticide sales (US$ ha "^"-1",")")),
+       x = NULL) +
+  scale_color_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+  scale_fill_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+  scale_shape_manual(values = c(1, 1, 16, 1)) +
+  annotate("text", x = 1998, y = 33, 
+           fontface = "bold", size = 10,
+           label = "Herbicide", color = "#FE4E00") +
+  geom_curve(x = 2013, y = 55, 
+                   xend = 2011, yend = 57,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "#e5e5ff") + 
+  annotate("text", x = 2008, y = 57, #fontface = NULL,
+           label = "Inseticide", size = 10, color = "#e5e5ff") +
+  geom_curve(x = 2007, y = 18, 
+                   xend = 2009, yend = 15,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = 0.3, color = "#d2f8d2") + 
+  annotate("text", x = 2012, y = 15.5, #fontface = NULL,
+           label = "Fungicide", size = 10, color = "#d2f8d2") +
+  geom_curve(x = 2011, y = 1.5, 
+                   xend = 2013, yend = 5,
+               arrow = arrow(length = unit(0.07, "inch")), 
+               size = 0.4, curvature = -0.3, color = "grey80") + 
+  annotate("text", x = 2016, y = 5, #fontface = NULL,
+           label = "Acaricide", size = 10, color = "grey80") +
+  geom_smooth(method = "loess", alpha = 0.05) +
+  theme_bw() +
+  theme(plot.title.position = "plot",
+        legend.position = "none",
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
+        panel.grid = element_line(color = "gray96")) -> sales
+```
 
 
 
@@ -79,7 +159,6 @@ path1 <- "../Ibama/ibama_2/Historico total agrotóxicos_por estado_2000_2018-1.
 
 historico <- readxl::read_excel(path1)
 ```
-
 
 ```{r}
 historico1 <- historico %>% 
@@ -173,16 +252,19 @@ ai_rate %>%
 #           label = "Other pesticides: fungicide, insecticide and acaricide", 
 #           color = "#4B0082", size = 3) +
   labs(y = expression(paste("Pesticide sales (kg ai ha "^"-1",")")),
-       x = NULL, color = NULL, fill = NULL) +
-  theme_bw(base_family = "lato") +
+       x = NULL, color = NULL, fill = NULL,
+       caption = "**Source:** Adapted from IBGE and FAO, 2021") +
+  theme_bw() +
   theme(legend.position = "none",
         axis.text = element_markdown(size = 30),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
         axis.title = element_markdown(size = 35),
         panel.grid = element_line(color = "gray96")) -> herb
 ```
 
 
 
+       
 
 ```{r}
 library(patchwork)
@@ -390,7 +472,7 @@ perc_increase5 %>%
                         limits = c(-85, 2300)) +
   labs(y = "% active ingrediente increase",
        x = NULL, color = "% increase",
-       caption = "**Source:** IBAMA, 2020") +
+       caption = "**Source:** Adapted from IBAMA, 2020") +
   theme_bw(base_family = "lato") +
   theme(legend.position = c(0.88, 0.07),
         axis.text = element_markdown(size = 32),
@@ -555,7 +637,7 @@ soa_total2 %>%
                                                                     unit = 'cm')),
         panel.grid = element_blank())
 
-ggsave("Figure 3.png", bg = "gray96")
+ggsave("Figure 3.png", bg = "#F9F6EE")
 ```
 
 
@@ -595,8 +677,8 @@ soa_crop %>%
                                            "PPO", "ALS", "Auxins", "PSII",
                                            "EPSPs"))) %>% 
   ungroup() %>% 
-  mutate(crop = fct_relevel(crop, levels = c("Soybean", "Pasture", "Corn",
-                                             "Sugarcane", "Cotton"))) %>% 
+#  mutate(crop = fct_relevel(crop, levels = c("Soybean", "Pasture", "Corn",
+#                                             "Sugarcane", "Cotton"))) %>% 
   mutate(year_season = case_when(
     year_season == "17/18" ~ "2017/18",
     year_season == "18/19" ~ "2018/19",
@@ -615,11 +697,11 @@ soa_crop1 %>%
   facet_grid(~ crop, scales = "free") +
   facetted_pos_scales(
     y = rep(list(
-      scale_y_continuous(limits = c(0, 85)),
+      scale_y_continuous(limits = c(0, 22)),
+      scale_y_continuous(limits = c(0, 5)),
       scale_y_continuous(limits = c(0, 26)),
-      scale_y_continuous(limits = c(0, 30)),
-      scale_y_continuous(limits = c(0, 13)),
-      scale_y_continuous(limits = c(0, 5))
+      scale_y_continuous(limits = c(0, 85)),
+      scale_y_continuous(limits = c(0, 13))
     ), each = 1)
   ) +
   coord_flip() +
@@ -637,7 +719,7 @@ soa_crop1 %>%
        fill = NULL,
        caption = "**Source:** Spark, 2021") +
   theme_bw() +
-  theme(legend.position = c(0.3,0.2),
+  theme(legend.position = c(0.5,0.1),
         legend.background = element_rect(colour = NA, fill = NA),
         legend.key = element_rect(colour = NA, fill = NA),
         legend.key.size = unit(0.7, "lines"),
