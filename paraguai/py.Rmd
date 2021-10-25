@@ -95,16 +95,17 @@ py2 |>
                                                         #reverse = TRUE,
                                                         padding = 0.2)) +
   coord_flip() +
-  geom_text(aes(label = round(value/1000,0)), size = 9, 
+  geom_text(aes(label = round(value/1000,0), color = as_factor(year)), size = 9, 
             position = position_dodge(width = 1), 
-            color = "#333333", hjust = -0.2, fontface = "bold") +
+            hjust = -0.2, fontface = "bold", show.legend = FALSE) +
   ylim(0, 5000) +
   labs(x = NULL,
        y = "kg of active ingredient (× 1000)") +
-  scale_fill_manual(name = NULL, values = c(2,3,4),
-                    guide = guide_legend(reverse = TRUE)) +
-  theme_bw(base_family = "lato") +
+  scale_fill_colorblind(guide = guide_legend(reverse = TRUE)) +
+  scale_color_colorblind() +
+  theme_bw() +
   theme(legend.position = c(0.9, 0.5),
+        legend.title = element_blank(),
         legend.text = element_text(size = 35),
         legend.background = element_blank(),
         axis.title = element_markdown(size = 35),

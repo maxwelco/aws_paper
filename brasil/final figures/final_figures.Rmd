@@ -51,6 +51,604 @@ all_col_names <- c(
 
 tab_names <- fwf_empty(
   file = table_trimmed,
-  col_names = NULL
+  col_names = all_col_names
 )
+```
+
+
+```{r}
+table_trimmed |> 
+  as_tibble(col_names = all_col_names)
+```
+
+
+
+
+
+
+
+
+
+
+# VENDAS DE AGROTÓXICOS E AFINS NO BRASIL NO PERÍODO DE 2000 A 2018 (Unidade: tonelada de ingrediente ativo)
+
+
+```{r}
+path1 <- "../Ibama/ibama_2/Historico total agrotóxicos_por estado_2000_2018-1.xls"
+
+
+historico <- readxl::read_excel(path1)
+```
+
+
+```{r}
+historico1 <- historico %>% 
+  janitor::row_to_names(row_number = 2)  %>% 
+  janitor::clean_names() %>% 
+  rename(location = na) %>% 
+  pivot_longer(cols = qtde:var_percent_15, 
+               names_to = "variable", values_to = "value") %>% 
+  mutate(year = case_when(
+    variable %in% c("qtde", "part_percent") ~ "2000",
+    variable %in% c("qtde_2", "part_percent_2", "var_percent") ~ "2001",
+    variable %in% c("qtde_3", "part_percent_3", "var_percent_2") ~ "2002",
+    variable %in% c("qtde_4", "part_percent_4", "var_percent_3") ~ "2003",
+    variable %in% c("qtde_5", "part_percent_5", "var_percent_4") ~ "2004",
+    variable %in% c("qtde_6", "part_percent_6", "var_percent_5") ~ "2005",
+    variable %in% c("qtde_7", "part_percent_7", "var_percent_6") ~ "2006",
+    variable %in% c("qtde_8", "part_percent_8", "var_percent_7") ~ "2009",
+    variable %in% c("qtde_9", "part_percent_9", "var_percent_8") ~ "2010",
+    variable %in% c("qtde_10", "part_percent_10", "var_percent_9") ~ "2011",
+    variable %in% c("qtde_11", "part_percent_11", "var_percent_10") ~ "2012",
+    variable %in% c("qtde_12", "part_percent_12", "var_percent_11") ~ "2013",
+    variable %in% c("qtde_13", "part_percent_13", "var_percent_12") ~ "2014",
+    variable %in% c("qtde_14", "part_percent_14", "var_percent_13") ~ "2015",
+    variable %in% c("qtde_15", "part_percent_15", "var_percent_14") ~ "2016",
+    variable %in% c("qtde_16", "part_percent_16", "var_percent_15") ~ "2017",
+    variable %in% c("qtde_17", "part_percent_17", "var_percent_16") ~ "2018",
+    TRUE ~ "NA"))
+```
+
+
+```{r}
+historico2 <- historico1 %>% 
+mutate(variable = str_remove(variable, "(\\s+[A-Za-z]+)?[0-9-]+")) %>% 
+  mutate(variable = fct_recode(variable,
+                               "qtde" = "qtde_",
+                               "part_percent" = "part_percent_",
+                               "var_percent" = "var_percent_")) %>% 
+  mutate(value = round(as.double(value), 2),
+         year = as.integer(year)) %>% 
+  group_by(year, location) %>% 
+#  rowid_to_column() %>% 
+  pivot_wider(
+              names_from = variable,  values_fn = list(count=list),
+              values_from = value) %>% 
+  unchop(everything())
+```
+
+
+```{r}
+historico2 %>% 
+  filter(location %in% "Total") %>% 
+  left_join(area_br, by = c("year")) %>% 
+  dplyr::select(year, qtde, area) %>% 
+  rename(value = qtde) %>% 
+  mutate(rate = value * 1000 / area) %>%
+  mutate(type =  "pesticide") -> rate_pesticide
+```
+
+
+```{r}
+rate_herbicide %>% 
+  bind_rows(rate_pesticide) %>% 
+  dplyr::select(-location, -unit) %>% 
+  pivot_wider(id_cols = year, names_from = type, values_from = rate) %>% 
+  mutate(other = pesticide - herbicide) %>% 
+  pivot_longer(cols = 2:4, names_to = "type", values_to = "rate") -> ai_rate
+```
+
+
+```{r}
+# IBAMA tem dados conjuntos de pesticidas - herbicida separado é apenas na FAO
+ai_rate %>% 
+  filter(type != "other") %>% 
+  filter(!is.na(rate)) %>% 
+  ggplot(aes(x = year, y = rate, color = type, 
+             fill = type, shape = type)) +
+  geom_point() +
+  geom_line(alpha = 0.5) +
+  geom_smooth(method = "loess", alpha = 0.2) +
+  scale_x_continuous(limits = c(1990, 2020), #expand = c(.01, .01),
+                     breaks = seq(1990, 2020, by = 5)) +
+  scale_y_continuous(limits = c(0, 8), breaks = seq(0, 8, by = 1)) +
+  scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
+  scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
+  scale_shape_manual(values = c(16,1)) +
+  annotate("text", x = 2015, y = 2.5, label = "Herbicide", 
+           color = "#FE4E00", fontface = "bold", size = 10) +
+  annotate("text", x = 2015, y = 6, label = "Pesticides", 
+           color = "#4B0082", fontface = "bold", size = 10) +
+#  annotate("text", x = 2010, y = 0.1, 
+#           label = "Other pesticides: fungicide, insecticide and acaricide", 
+#           color = "#4B0082", size = 3) +
+  labs(y = expression(paste("Pesticide sales (kg ai ha "^"-1",")")),
+       x = NULL, color = NULL, fill = NULL) +
+  theme_bw(base_family = "lato") +
+  theme(legend.position = "none",
+        axis.text = element_markdown(size = 30),
+        axis.title = element_markdown(size = 35),
+        panel.grid = element_line(color = "gray96")) -> herb
+```
+
+
+
+
+```{r}
+library(patchwork)
+sales | herb
+
+ggsave("Figure 1.png", width = 10, height = 5)
+```
+
+
+# Figure 2
+<!-- Figura 2 - Aldo -->
+
+```{r message = FALSE}
+readxl::read_excel("../Ibama/dados_aldo_2019.xlsx", 
+                   sheet = "Var 2009-19 Hs e Culturas") %>% 
+  janitor::row_to_names(row_number = 2) %>% 
+  slice_head(n = 25) %>%
+  mutate(`2008` = as.character(0)) %>% 
+  pivot_longer(cols = c(3:13), 
+               names_to = "year", 
+               values_to = "perc") %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(ingrediente_ativo)) %>% 
+  rename(ton_ia = x2009) %>% 
+  mutate(year = str_replace(year, "2008", "2009")) %>% 
+  mutate(ingrediente_ativo = as_factor(ingrediente_ativo)) %>% 
+  mutate_if(is_character, as.double) %>%
+  mutate_if(is.double, ~round(.,1)) %>% 
+  mutate(first_yr = if_else(ingrediente_ativo %in% 
+                              c("cletodim", "fenoxaprope-P-etílico",
+                                "triclopir-butotílico") , 
+                            2010, 
+                            2009)) %>% 
+  mutate(ton_ia = case_when(
+    ingrediente_ativo == "cletodim" ~ 244.5,
+    ingrediente_ativo == "fenoxaprope-P-etílico" ~ 55.2,
+    ingrediente_ativo == "triclopir-butotílico" ~ 489.8,
+    TRUE ~ ton_ia
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "cletodim" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "fenoxaprope-P-etílico" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "triclopir-butotílico" & year == 2009 ~ NA_real_,
+    TRUE ~ perc
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "cletodim" & year == 2010 ~ 0,
+    ingrediente_ativo == "fenoxaprope-P-etílico" & year == 2010 ~ 0,
+    ingrediente_ativo == "triclopir-butotílico" & year == 2010 ~ 0,
+    TRUE ~ perc
+  )) -> perc_increase
+```
+
+
+
+
+```{r}
+perc_increase %>% 
+  mutate(first_yr = case_when(
+    ingrediente_ativo %in% c("glufosinato - sal de amônio",
+                                "haloxifope-P-metílico",
+                                "sulfentrazona") ~ 2017,
+    TRUE ~ first_yr
+  )) %>% 
+    mutate(ton_ia = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" ~ 1137.65,
+    ingrediente_ativo == "haloxifope-P-metílico" ~ 690,
+    ingrediente_ativo == "sulfentrazona" ~ 1185.9,
+    TRUE ~ ton_ia
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "haloxifope-P-metílico" & year == 2009 ~ NA_real_,
+    ingrediente_ativo == "sulfentrazona" & year == 2009 ~ NA_real_,
+    TRUE ~ perc
+  )) %>% 
+    mutate(perc = case_when(
+    ingrediente_ativo == "glufosinato - sal de amônio" & year == 2017 ~ 0,
+    ingrediente_ativo == "haloxifope-P-metílico" & year == 2017 ~ 0,
+    ingrediente_ativo == "sulfentrazona" & year == 2017 ~ 0,
+    TRUE ~ perc)) %>% 
+  filter(ingrediente_ativo != "Total") -> perc_increase1
+#  mutate(ton_ia = ton_ia / 1000) 
+```
+
+
+```{r}
+perc_increase1 %>% 
+  mutate(ingrediente_ativo = fct_recode(ingrediente_ativo,
+   "2,4-D" = "2,4-d",
+   "ametryn" = "ametrina",
+   "atrazine" = "atrazina",
+   "clethodim" = "cletodim",
+   "clomazone" = "clomazona",
+   "chlorimurom-ethyl" = "clorimurom-etílico",
+   "paraquat" = "dicloreto de paraquate",
+   "diuron" = "diurom",
+   "fenoxaprop-P" = "fenoxaprope-P-etílico",
+   "glyphosate" = "glifosato (soma sais)",
+   "glufosinate" = "glufosinato - sal de amônio",
+   "haloxifop" = "haloxifope-P-metílico",
+   "hexazinone" = "hexazinona",
+   "imazaquin" = "imazaquim", 
+   "imazethapyr" = "imazetapir",
+   "metsulfuron-methyl" = "metsulfurom-metílico",
+   "nicosulfuron" = "nicosulfurom",
+   "picloram" = "picloram",
+   "propanil" = "propanil",
+   "simazine" = "simazina",
+   "sulfentrazone" = "sulfentrazona",
+   "triclopyr" = "triclopir-butotílico",
+   "trifluralin" = "trifluralina"
+  )) %>% 
+  mutate(ingrediente_ativo1 = fct_relevel(ingrediente_ativo,
+                                         levels = c("glufosinate", "haloxifop",
+                                                    "imazaquin", "nicosulfuron",
+                                                    "sulfentrazone", 
+                                                    "trifluralin", "glyphosate", 
+                                                    "imazethapyr", "clomazone",
+                                                    "propanil", "ametryn",
+                                                    "atrazine", "hexazinone", "triclopyr",
+                                                    "diuron", "fenoxaprop-P",
+                                                    "2,4-D","simazine",
+                                                    "picloram", "chlorimurom-ethyl", 
+                                                    "metsulfuron-methyl", "paraquat", "clethodim"))) %>% 
+  mutate(ton_ia = round(ton_ia, 0)) -> perc_increase2
+```
+
+```{r}
+perc_increase2 %>% 
+  mutate(ton_ia2 = paste(ton_ia, "ton ha<sup>-1</sup>")) %>% 
+  mutate(ton_ia2009 = if_else(year == 2009 & first_yr == 2009, 
+                              ton_ia, NA_real_)) %>% 
+  mutate(ton_ia2010 = if_else(year == 2010 & first_yr == 2010, 
+                              ton_ia, NA_real_)) %>% 
+  mutate(ton_ia2017 = if_else(year == 2017 & first_yr == 2017, 
+                              ton_ia, NA_real_)) %>% 
+  unite("ton", c(ton_ia2009, ton_ia2010, ton_ia2017), na.rm = TRUE)  -> perc_increase3
+```
+
+```{r}
+perc_increase3 %>% 
+  filter(!is.na(perc)) %>% 
+  mutate(group = case_when(
+    ingrediente_ativo1 %in% c("glufosinate", "haloxifop", 
+                             "imazaquin", "nicosulfuron") ~ "group1",
+    ingrediente_ativo1 %in% c("sulfentrazone", "trifluralin", 
+                             "glyphosate", "imazethapyr") ~ "group2",
+    ingrediente_ativo1 %in% c("clomazone", "propanil", 
+                             "ametryn", "atrazine") ~ "group3",
+    ingrediente_ativo1 %in% c("hexazinone", "triclopyr", 
+                             "diuron", "fenoxaprop-P") ~ "group4",
+    ingrediente_ativo1 %in% c("2,4-D", "simazine", 
+                             "picloram", "chlorimuron-ethyl") ~ "group5",
+    TRUE ~ "group6"
+  )) -> perc_increase4
+```
+
+```{r}
+perc_increase4 %>% 
+  mutate(label = case_when(
+    ingrediente_ativo1 == "glufosinate" ~ "Values in kg ha<sup>-1</sup> (× 1000)",
+    TRUE ~ NA_character_
+  )) -> perc_increase5
+```
+
+
+```{r}
+perc_increase5 %>% filter(year == 2019) %>% 
+  mutate(ton2 = parse_number(ton_ia2)) %>% 
+  mutate(ton3 = round(ton2 * (perc/100),0)) %>% 
+  mutate(ton4 = ton2 + ton3) -> perc_increase6
+```
+
+
+
+```{r}
+library(ggh4x)
+library(lemon)
+```
+
+
+```{r}
+perc_increase5 %>% 
+  filter(!is.na(perc)) %>% 
+  ggplot(aes(x = year, y = perc, color = perc)) +
+  geom_line(size = 1) +
+  geom_point() +
+  scale_x_continuous(limits = c(2008, 2022), 
+                     breaks = c(2009, 2012, 2015, 2018, 2021),
+                     labels = c("2009", "12", "15", "18", "21")) +
+  facet_wrap(~ ingrediente_ativo1,
+             ncol = 4, scales = "free_y") +
+  facetted_pos_scales(
+    y = rep(list(
+      scale_y_continuous(limits = c(-80, 60)),
+      scale_y_continuous(limits = c(-20, 100)),
+      scale_y_continuous(limits = c(-50, 200)),
+      scale_y_continuous(limits = c(-40, 350)),
+      scale_y_continuous(limits = c(0, 500)),
+      scale_y_continuous(limits = c(0, 2300))
+    ), each = 4)
+  ) +
+  scale_color_viridis_c(option = "H",
+                        limits = c(-85, 2300)) +
+  labs(y = "% active ingrediente increase",
+       x = NULL, color = "% increase",
+       caption = "**Source:** IBAMA, 2020") +
+  theme_bw(base_family = "lato") +
+  theme(legend.position = c(0.88, 0.07),
+        axis.text = element_markdown(size = 32),
+        axis.title = element_markdown(size = 35),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        panel.grid = element_line(color = "gray96"),
+        legend.direction = "horizontal",
+        legend.key.height = unit(0.7,"cm"),
+        legend.key.width = unit(0.9,"cm"),
+        legend.key.size = unit(0.2, "cm"),
+        legend.title = element_text(face = "bold", size = 30),
+        legend.text = element_text(face = "bold", size = 30, 
+                                   margin = margin(t = 0.1, 
+                                                   b = 0.1, unit = "pt")),
+        strip.text.x = element_markdown(face="bold", size = 35) 
+        ) +
+  guides(colour = guide_colourbar(title.position="top", 
+                                  frame.colour = "black",
+                                  order = 1)) -> fig1
+# facet_wrap2(vars(ingrediente_ativo1), 
+ #            scales = "free_y",
+ #            ncol = 4, as.table = TRUE,
+ #            axes = "full", remove_labels = "all") +
+```
+
+
+```{r warning = FALSE}
+fig1 +
+  geom_richtext(
+    data = perc_increase5 %>% 
+                  filter(!is.na(ton)),
+    mapping = aes(label = ton), show.legend = FALSE,
+    family = "lato",
+    fontface = "bold",
+    color = "2",
+    size = 8,
+    fill = NA, 
+    label.color = NA,
+    hjust = 0
+  ) +
+    geom_richtext(
+    data = perc_increase6,
+    mapping = aes(label = ton4), show.legend = FALSE,
+    family = "lato",
+    fontface = "bold",
+    color = "2",
+    size = 8,
+    fill = NA, 
+    label.color = NA,
+    hjust = 0
+  ) +
+   geom_richtext(data = perc_increase5, mapping = aes(x = 2013, y = 50, label = label), 
+                 fill = NA, label.color = NA, 
+                 fontface = "bold",
+                 size = 8, color = 2,
+                 inherit.aes = FALSE) 
+
+ggsave("Figure 2.png", height = 12, width = 9)
+```
+
+
+
+# Figure 3
+
+
+<!-- Figura 3 - Spark -->
+
+
+```{r}
+readxl::read_excel("../spark/spark_1.xlsx", sheet = "spark_1") %>% 
+  mutate(perc = perc / 100,
+         total_ha_soa = total_ha * perc) %>% 
+  mutate(herbicide = str_replace_all(herbicide, "Ohters", "Others")) %>% 
+  mutate(mi_ha = round(total_ha / 1000000,1)) %>% 
+  mutate(mi_ha = str_glue("{mi_ha} mi")) %>% 
+  mutate(herbicide = case_when(
+    perc == "0.074" & year == "2015" ~ "FSI",
+    TRUE ~ herbicide 
+  )) -> soa_total
+```
+
+
+
+```{r}
+library(ggbump)
+library(cowplot)
+library(fishualize)
+```
+
+```{r}
+soa_total %>% 
+  mutate(herbicide = fct_recode(herbicide, 
+                                "PSII" = "FSII",
+                                "PSI" = "FSI",
+                                "DXP" = "DPX",
+                                "Auxins" = "Auxinas",
+                                "Glutamine" = "Glutamina")) -> soa_total1
+```
+
+```{r}
+colors <- c("#78A8D1",  "#EFBF6A", "#AF7366", "#CDD4E4",  "#E7CDC2",
+            "#CF9FFF", "#B2AAA2", "#B18147", "#C9BDA3", "#FF9999",
+            "#a2e665")
+```
+
+```{r}
+dutchmasters$view_of_Delft
+```
+
+
+```{r}
+soa_total1 %>% 
+  group_by(year) %>% 
+  arrange(desc(total_ha_soa)) %>% 
+  mutate(rank = row_number()) -> soa_total2
+
+soa_total2 %>% 
+  ggplot(aes(x = year, y = rank, color = herbicide,
+             label = herbicide)) +
+  geom_text(data = soa_total2 %>% filter(year == 2020),
+            mapping = aes(x = year + .3, label = herbicide), 
+            size = 11, hjust = 0, fontface = "bold") +
+  geom_text(data = soa_total2 %>% filter(year == 2015),
+            mapping = aes(x = year - .3, label = herbicide), 
+            size = 11, hjust = 1, fontface = "bold") +
+  geom_text(data = soa_total2,
+            mapping = aes(y = 12, label = mi_ha), 
+            size = 9, hjust = 0.5, color = "#333333", fontface = "italic") +
+  geom_text(data = soa_total2 %>% filter(year == 2015),
+            mapping = aes(y = rank, x = year - 1.2, label = rank), 
+            size = 9, hjust = 0.5, color = "#333333", fontface = "bold") +
+  geom_segment(aes(x = 2013.8, y = 11.6, 
+                   xend = 2020.8, yend = 11.6),
+               color = 1) +
+  geom_segment(aes(x = 2013.8, y = 12.4, 
+                   xend = 2020.8, yend = 12.4),
+               color = "#333333") +
+  annotate("text", x = 2014.2, y = 12, color = "#333333", size = 10, 
+           label = "Total ha", fontface = "italic") +
+  geom_point(size = 8) +
+  geom_bump(size = 2, smooth = 8) +
+  geom_text(data = soa_total2 ,
+            mapping = aes(label = perc*100), 
+            size = 10, color = "#333333") +
+  scale_x_continuous(limits = c(2013.8, 2020.8),
+                     breaks = seq(2015, 2020, 1),
+                     labels = c("2014/15", "15/16", "16/17", 
+                              "17/18", "18/19", "19/20")) +
+  theme_minimal(base_family = "lato") +
+  scale_y_reverse(breaks = seq(0, 12, 1)) +
+  scale_color_manual(values = colors) +
+#  scale_color_brewer(palette = "Paired") +
+#  scale_color_dutchmasters(palette = "little_street") +
+  labs(x = NULL, y = NULL,
+       caption = "**Source:** Spark, 2021") +
+  theme(legend.position = "none",
+        axis.text.y = element_blank(),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        axis.ticks = element_blank(),
+        axis.text.x = element_markdown(size = 30, face = "bold", 
+                                       vjust = 0.5, margin = margin(-0.3,0,0,0, 
+                                                                    unit = 'cm')),
+        panel.grid = element_blank())
+
+ggsave("Figure 3.png", bg = "gray96")
+```
+
+
+# Figure 4
+
+```{r}
+readxl::read_excel("spark.xlsx", sheet = "spark_2") %>% 
+  mutate(perc_soa = perc_soa / 100,
+         perc_crop = perc_crop / 100,
+         total_ha_soa = total_ha_season * perc_soa * perc_crop) %>% 
+  mutate(crop = str_to_title(crop)) %>% 
+  mutate(mi_ha = round(total_ha_soa / 1000000, 5),
+         mi_ha = str_glue("{mi_ha} mi ha")) %>% 
+  mutate(soa = fct_recode(soa,
+                          "PSI" = "FSI",
+                          "Glutamine" = "Glutamina",
+                          "VLCFA" = "Divisao celular",
+                          "Auxins" = "Auxinas",
+                          "PSII" = "FSII")) -> soa_crop
+```
+
+```{r}
+soa_crop 
+```
+
+
+
+
+
+
+```{r}
+soa_crop %>%
+  mutate(soa_mi = round(total_ha_soa/1000000,1)) %>% 
+  filter(soa_mi > 0) %>% 
+  mutate(soa = fct_relevel(soa, levels = c("Others", "DPX", "Glutamine",
+                                           "PSI", "VLCFA", "HPPD", "ACCase",
+                                           "PPO", "ALS", "Auxins", "PSII",
+                                           "EPSPs"))) %>% 
+  ungroup() %>% 
+  mutate(crop = fct_relevel(crop, levels = c("Soybean", "Pasture", "Corn",
+                                             "Sugarcane", "Cotton"))) %>% 
+  mutate(year_season = case_when(
+    year_season == "17/18" ~ "2017/18",
+    year_season == "18/19" ~ "2018/19",
+    TRUE ~  "2019/20")) |> 
+  mutate(crop_area = round(crop_area, 1)) -> soa_crop1
+```
+
+
+```{r}
+library(ggh4x)
+soa_crop1 %>% 
+  ggplot(aes(x = soa, y = soa_mi, 
+             fill = year_season)) +
+  geom_bar(stat = "identity",
+           position = position_dodge2(width = 1, reverse = FALSE)) +
+  facet_grid(~ crop, scales = "free") +
+  facetted_pos_scales(
+    y = rep(list(
+      scale_y_continuous(limits = c(0, 85)),
+      scale_y_continuous(limits = c(0, 26)),
+      scale_y_continuous(limits = c(0, 30)),
+      scale_y_continuous(limits = c(0, 13)),
+      scale_y_continuous(limits = c(0, 5))
+    ), each = 1)
+  ) +
+  coord_flip() +
+#  scale_fill_dutchmasters(palette = "pearl_earring",
+#                           guide = guide_legend(reverse = TRUE)) +
+  scale_fill_colorblind(labels = c("2017/18", "18/19", "19/20")) +
+  scale_color_colorblind() +
+  geom_text(data = soa_crop1, mapping = aes(x = soa, y = soa_mi,
+                label = soa_mi, color = year_season), size = 6, hjust = -0.2,
+            position = position_dodge2(width = 1, reverse = FALSE),
+            show.legend = FALSE) +
+#  scale_y_continuous(limits = c(0, 155)) +
+  labs(x = NULL,
+       y = "Million ha",
+       fill = NULL,
+       caption = "**Source:** Spark, 2021") +
+  theme_bw() +
+  theme(legend.position = c(0.3,0.2),
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 22),
+        axis.title = element_markdown(size = 30),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) +
+  guides(fill = guide_legend(nrow = 3, reverse = TRUE)) -> fig4a
+
+ggsave("Figure 4.png", height = 4.2, width = 8, dpi = 300)
 ```
