@@ -130,10 +130,7 @@ final_resistance_data <- resistance_data %>%
   dplyr::select(-x)
 ```
 
-  ggplot(aes(x = first_year, y = n, color = country)) +
-  geom_line() +
-  geom_point() +
-  scale_color_viridis_d(option = "H")
+
 ```{r}
 final_resistance_data %>% 
   filter(country_name %in% c("argentina", "brazil",
@@ -159,6 +156,7 @@ library(rnaturalearthdata)
 library(ggspatial)
 theme_set(theme_bw())
 ```
+
 ```{r}
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
@@ -197,7 +195,7 @@ world %>%
 world_points <- st_centroid(world)
 world_points <- cbind(world, 
                       st_coordinates(st_centroid(world$geometry))) %>% 
-  filter(sovereignt %in% c("Argentina", "Brazil",
+  filter(sovereignt %in% c("Argentina", "Brazil", "Kiribati",
                              "Uruguay", "Chile", "Paraguay",
                              "Colombia", "Bolivia", "Peru",
                              "Ecuador", "Venezuela")) 

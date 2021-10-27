@@ -1,0 +1,100 @@
+---
+title: "graphical_abstract"
+author: "Maxwel Coura Oliveira"
+date: "10/27/2021"
+output: html_document
+---
+
+```{r warning =FALSE}
+library(tidyverse)
+library(maps)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggspatial)
+theme_set(theme_bw())
+```
+sovereignt
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+```
+
+```{r}
+world |> tibble() |> 
+  arrange(sovereignt) |> 
+  filter(region_wb %in% "Latin America & Caribbean")
+```
+
+
+```{r}
+world_points <- st_centroid(world)
+world_points <- cbind(world, 
+                      st_coordinates(st_centroid(world$geometry))) %>% 
+    filter(sovereignt %in% c("Argentina", "Brazil",
+                             "Uruguay", "Chile", "Paraguay",
+                             "Colombia", "Bolivia", "Peru",
+                             "Ecuador", "Venezuela", "Suriname",
+                           "Guyana", "Kiribati")) 
+#  filter(subregion %in% "South America")
+```
+
+
+
+```{r}
+library(ggrepel)
+ggplot(data = world_points) +
+  geom_sf() +
+  geom_sf(world_points |> 
+                    filter(subregion == "South America"),
+          mapping = aes(fill = sovereignt)) +
+  coord_sf(xlim = c(-90, -30), ylim = c(-60, 17), expand = FALSE) +
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        legend.position = c(0.80, 0.95),
+        legend.background = element_rect(fill = NA),
+        legend.direction = "horizontal",
+        axis.text = element_markdown(size = 30),
+        legend.title = element_markdown(face = "bold"),
+        legend.key.width = unit(2,"line")) +
+  guides(fill = guide_colourbar(title.position="top",
+                                title.hjust = 0.5)) -> map1
+```
+
+
+```{r}
+map1 +
+  geom_text_repel(data= world_points |> 
+                    filter(continent == "South America"),aes(x=X, y=Y, label=name),
+            size = 15, seed = 165,
+            color = "#F9F6EE", fontface = "bold") +
+  annotate(geom = "richtext", x = -89.9, y = 15, 
+           fill = NA, label.color = NA,
+           label = "Herbicide use history and perspectives in South America", 
+           fontface = "bold", color = "#333333", size = 18, hjust = 0) +
+  labs(x = NULL, y = NULL, fill = "Number of resistant weeds") +
+  annotate(geom = "text", x = -35, y = -20, label = "Atlantic ocean", 
+           fontface = "italic", color = "blue", size = 12) +
+  annotate(geom = "text", x = -76, y = -25, label = "Pacific ocean", 
+           fontface = "italic", color = "blue", size = 12) +
+  annotation_scale(location = "br", width_hint = 0.4, text_cex = 2) + 
+  annotation_north_arrow(location = "bl", 
+                         which_north = "true",
+                         pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"), 
+                         style = north_arrow_nautical) +
+  scale_fill_viridis_d(option = "H") -> map2
+```
+
+
+```{r}
+map2 +
+  annotate(geom = "richtext", x = -59, y = 10, 
+           label = "Synthetic herbicides were introduced in <br>1940s. Since then, herbicides have become <br>a major tool for vegetation management.", 
+           fill = NA, label.color = NA,
+           color = "#333333", size = 12, hjust = 0, lineheight = 0.4) +
+  annotate(geom = "richtext", x = -62, y = -45, 
+           label = "We have provided an overview about the <br>historical use and the future perspectives of <br>herbicides in **South America**. We focused on <br>herbicide use in row crops of Brazil, <br>Argentina, Uruguay, Paraguay, and Chile.", 
+           fill = NA, label.color = NA,
+           color = "#333333", size = 12, hjust = 0, lineheight = 0.4) 
+
+ggsave("map.png", width = 7, height = 9)
+```
