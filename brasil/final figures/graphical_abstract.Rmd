@@ -64,7 +64,7 @@ map1 +
                   aes(x=X, y=Y, label=name),
             size = 6, 
             seed = 165,
-            color = "#F9F6EE", 
+            color = "beige", 
             fontface = "bold") +
   annotate(geom = "richtext", 
            x = -89.9, 
