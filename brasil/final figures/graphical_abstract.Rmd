@@ -103,7 +103,7 @@ map1 +
   scale_fill_viridis_d(option = "H") -> map2
 ```
 
-
+ 
 ```{r}
 map2 +
   annotate(geom = "richtext", x = -58, y = 10, 
