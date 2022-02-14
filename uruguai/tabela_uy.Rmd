@@ -1,0 +1,30 @@
+---
+title: "tabela_uy"
+author: "Maxwel Coura Oliveira"
+date: "2/14/2022"
+output: html_document
+---
+
+
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(ggtext)
+```
+
+
+```{r}
+readxl::read_excel("tabela_uy.xlsx") |> 
+  janitor::clean_names() |> 
+  mutate(ing_ativo = str_to_lower(ing_ativo)) -> uy_table
+```
+
+
+```{r}
+uy_table |> 
+  ggplot(aes(x = year, y = volumenes_cif_en_us, color = ing_ativo)) +
+  geom_line(show.legend = FALSE) +
+  facet_wrap(~ing_ativo)
+```
+
