@@ -25,6 +25,11 @@ readxl::read_excel("tabela_uy.xlsx") |>
 uy_table |> 
   ggplot(aes(x = year, y = volumenes_cif_en_us, color = ing_ativo)) +
   geom_line(show.legend = FALSE) +
-  facet_wrap(~ing_ativo)
+  facet_wrap(~ing_ativo, ncol = 5) +
+  scale_y_continuous(labels = scales::label_number(scale = 100, suffix = "%")) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90))
+
+ggsave("uy_figure.png", height = 9, width = 7)
 ```
 
