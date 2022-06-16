@@ -479,7 +479,7 @@ perc_increase5 %>%
         panel.grid = element_line(color = "gray96"),
         legend.direction = "horizontal",
         legend.key.height = unit(0.7,"cm"),
-        legend.key.width = unit(0.9,"cm"),
+        legend.key.width = unit(0.9,"cm"), 
         legend.key.size = unit(0.2, "cm"),
         legend.title = element_text(face = "bold", size = 30),
         legend.text = element_text(face = "bold", size = 30, 
