@@ -1,0 +1,109 @@
+---
+title: "chile"
+author: "Maxwel Coura Oliveira"
+date: '2022-06-20'
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(patchwork)
+```
+
+```{r}
+tribble(
+  ~pesticide, ~year, ~perc, ~value,
+  "Herbicide", 1990, 47, 7, 
+  "Herbicide", 1995, 50, 12,
+  "Herbicide", 2000, 51, 16,
+  "Herbicide", 2005, 44, 21,
+  "Herbicide", 2010, 40, 18,
+  "Herbicide", 2015, 40, 23,
+  "Herbicide", 2020, 37, 30,
+  "Fungicide", 1990, 27, 7, 
+  "Fungicide", 1995, 23, 12,
+  "Fungicide", 2000, 17, 16,
+  "Fungicide", 2005, 22, 21,
+  "Fungicide", 2010, 21, 18,
+  "Fungicide", 2015, 25, 23,
+  "Fungicide", 2020, 27, 30,
+  "Insecticide", 1990, 26, 7, 
+  "Insecticide", 1995, 27, 12,
+  "Insecticide", 2000, 32, 16,
+  "Insecticide", 2005, 33, 21,
+  "Insecticide", 2010, 39, 18,
+  "Insecticide", 2015, 35, 23,
+  "Insecticide", 2020, 36, 30
+) -> fig7
+```
+
+
+```{r}
+fig7 |> 
+  ggplot(aes(x = factor(year), y = value, 
+             fill = pesticide, label = perc)) +
+  geom_bar(stat = "identity", position = "stack") +
+  theme_bw(base_family = "lato") +
+  labs(x = NULL, y = "Pesticide importing (× 1000 ton)", fill = NULL) +
+  theme(legend.position = "bottom") +
+  scale_fill_colorblind() +
+  geom_bar_text(position = "stack", reflow = TRUE, size = 25) +
+  theme(legend.position = c(0.2, 0.8),
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 28),
+        axis.title = element_markdown(size = 30),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) -> fig7a
+
+ggsave("figure7.png", width = 6, height = 4)
+```
+
+
+
+```{r}
+tribble(
+  ~year, ~value,
+  1990, 19.1,
+  1995, 34.3,
+  2000, 43.5,
+  2005, 52.5,
+  2010, 51.6,
+  2015, 73.6,
+  2020, 77.2
+) |> 
+  ggplot(aes(x = factor(year), y = value, label = value)) +
+  geom_bar(stat = "identity", fill =  "#333333") +
+  theme_bw(base_family = "lato") +
+  labs(x = NULL, y = "Million US$", fill = NULL,
+       caption = "Source: ODEPA") +
+  geom_bar_text(position = "stack", reflow = TRUE, size = 25) +
+  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom",
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 28),
+        axis.title = element_markdown(size = 30),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) -> fig7b
+
+ggsave("figure7B.png", width = 6, height = 4)
+```
+
+
+```{r}
+fig7a / fig7b +
+  plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 35, hjust = 0, vjust = 0))
+
+ggsave("figure7.png", width = 5, height = 8)
+```
+

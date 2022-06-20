@@ -9,6 +9,7 @@ output: html_document
 library(gtExtras)
 library(gt)
 library(tidyverse)
+library(ggfittext)
 ```
 
 
@@ -63,5 +64,53 @@ gtsave(table2, "table2.png")
 ```
 
 
+```{r}
+tribble(
+  ~herbicide, ~year, ~value,
+  "Glyphosate", 2008, 1426,
+  "Glyphosate", 2013, 1051,
+  "Glyphosate", 2014, 1132,
+  "Glyphosate", 2015, 860,
+  "Glyphosate", 2016, 741,
+  "Glyphosate", 2017, 612,
+  "Glyphosate", 2018, 615,
+  "Glyphosate", 2019, 709,
+  "Other herbicides", 2008, 351,
+  "Other herbicides", 2013, 757,
+  "Other herbicides", 2014, 967,
+  "Other herbicides", 2015, 916,
+  "Other herbicides", 2016, 1014,
+  "Other herbicides", 2017, 1142,
+  "Other herbicides", 2018, 1196,
+  "Other herbicides", 2019, 1255
+) -> fig5
+```
+
+
+```{r}
+fig5 |> 
+  ggplot(aes(x = factor(year), y = value, 
+             fill = herbicide, label = value)) +
+  geom_bar(stat = "identity", position = "stack") +
+  theme_bw(base_family = "lato") +
+  labs(x = NULL, y = "Herbicide sales (Million US$)", fill = NULL, 
+       caption = "**Source:** BASF, Corteva, and Syngenta") +
+  theme(legend.position = "bottom") +
+  scale_fill_colorblind() +
+  geom_bar_text(position = "stack", reflow = TRUE, size = 25) +
+  theme(legend.position = "bottom",
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.title = element_markdown(size = 20, face = "bold", 
+                                        lineheight = 0.2),
+        legend.text = element_markdown(size = 22),
+        axis.title = element_markdown(size = 30),
+        plot.caption = element_markdown(size = 20, color = "#333333"),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26))
+
+ggsave("figure5.png", width = 6, height = 4)
+```
 
 
