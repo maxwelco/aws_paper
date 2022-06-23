@@ -16,6 +16,7 @@ library(extrafont)
 library(showtext)
 showtext_auto()
 font_add_google("Roboto", "roboto") 
+font_add_google("Lato", "lato") 
 ```
 
 

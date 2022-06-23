@@ -8,6 +8,8 @@ output: html_document
 ```{r}
 library(tidyverse)
 library(patchwork)
+library(ggthemes)
+library(ggtext)
 ```
 
 ```{r}
@@ -41,26 +43,24 @@ tribble(
 ```{r}
 fig7 |> 
   ggplot(aes(x = factor(year), y = value, 
-             fill = pesticide, label = perc)) +
+             fill = pesticide, label= paste(perc, "%"))) +
   geom_bar(stat = "identity", position = "stack") +
   theme_bw(base_family = "lato") +
   labs(x = NULL, y = "Pesticide importing (× 1000 ton)", fill = NULL) +
   theme(legend.position = "bottom") +
   scale_fill_colorblind() +
   geom_bar_text(position = "stack", reflow = TRUE, size = 25) +
-  theme(legend.position = c(0.2, 0.8),
+  theme(legend.position = c(0.3, 0.8),
         legend.background = element_rect(colour = NA, fill = NA),
         legend.key = element_rect(colour = NA, fill = NA),
-        legend.key.size = unit(0.7, "lines"),
-        legend.title = element_markdown(size = 20, face = "bold", 
-                                        lineheight = 0.2),
+        legend.key.size = unit(1, "lines"),
         legend.text = element_markdown(size = 28),
         axis.title = element_markdown(size = 30),
         plot.caption = element_markdown(size = 20, color = "#333333"),
         axis.text = element_markdown(size = 25),
         strip.text = element_markdown(face = "bold", size = 26)) -> fig7a
 
-ggsave("figure7.png", width = 6, height = 4)
+#ggsave("figure7.png", width = 6, height = 4)
 ```
 
 
@@ -79,9 +79,11 @@ tribble(
   ggplot(aes(x = factor(year), y = value, label = value)) +
   geom_bar(stat = "identity", fill =  "#333333") +
   theme_bw(base_family = "lato") +
-  labs(x = NULL, y = "Million US$", fill = NULL,
+  labs(x = NULL, y = "Herbicide sales (million US$)", fill = NULL,
        caption = "Source: ODEPA") +
-  geom_bar_text(position = "stack", reflow = TRUE, size = 25) +
+  geom_bar_text(position = "stack", 
+                reflow = TRUE, 
+                size = 25) +
   theme(legend.position = "bottom") +
   theme(legend.position = "bottom",
         legend.background = element_rect(colour = NA, fill = NA),
@@ -95,7 +97,7 @@ tribble(
         axis.text = element_markdown(size = 25),
         strip.text = element_markdown(face = "bold", size = 26)) -> fig7b
 
-ggsave("figure7B.png", width = 6, height = 4)
+#ggsave("figure7B.png", width = 6, height = 4)
 ```
 
 
