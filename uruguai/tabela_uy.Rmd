@@ -11,14 +11,70 @@ output: html_document
 library(tidyverse)
 library(ggthemes)
 library(ggtext)
+library(reactablefmtr)
 ```
 
 
 ```{r}
 readxl::read_excel("tabela_uy.xlsx") |> 
   janitor::clean_names() |> 
-  mutate(ing_ativo = str_to_lower(ing_ativo)) -> uy_table
+  mutate(ing_ativo = str_to_lower(ing_ativo)) |> 
+  mutate(volumenes_cif_en_us = volumenes_cif_en_us * 100) -> uy_table
 ```
+
+```{r}
+uy_table |> 
+  mutate(volumenes_cif_en_us = round(volumenes_cif_en_us, 0)) |> 
+  pivot_wider(names_from = year, values_from = volumenes_cif_en_us) |> 
+  dplyr::select(-moa_group) -> uy_table1
+```
+
+
+```{r}
+uy_table1 |> 
+  reactable(
+    compact = TRUE,
+    pagination = FALSE,
+    showSortIcon = FALSE,
+    defaultSorted = "1995",
+    defaultSortOrder = 'desc',
+      defaultColDef = colDef(
+    align = 'center', 
+    style = color_scales(uy_table1, 
+                         brighten_text = FALSE, 
+                         text_color = 'grey', 
+                         bold_text = TRUE, span = TRUE)
+))  -> tabuy
+
+save_reactable(tabuy, "table1.png")
+```
+
+
+```{r}
+
+  reactable(
+  compact = TRUE,
+  pagination = FALSE,
+  showSortIcon = FALSE,
+  defaultSortOrder = 'desc',
+  defaultColDef = colDef(
+    maxWidth = 50,
+    align = 'center',
+#    cell = tooltip(number_fmt = scales::comma),
+    style = color_scales(uy_table, brighten_text = FALSE, 
+                         text_color = 'grey', bold_text = TRUE, span = TRUE)
+  ),
+  columns = list(
+    country = colDef(
+      maxWidth = 175,
+      align = 'left'
+    )
+  )
+) %>% 
+  add_title('Average Life Expectancy') %>% 
+  add_source('Data sourced from the {gapminder} package') 
+```
+
 
 
 ```{r}
@@ -26,9 +82,16 @@ uy_table |>
   ggplot(aes(x = year, y = volumenes_cif_en_us, color = ing_ativo)) +
   geom_line(show.legend = FALSE) +
   facet_wrap(~ing_ativo, ncol = 5) +
-  scale_y_continuous(labels = scales::label_number(scale = 100, suffix = "%")) +
+#  scale_y_continuous(labels = scales::label_number(scale = 100, suffix = "%")) +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 45),
+        legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.text = element_markdown(size = 22),
+        axis.title = element_markdown(size = 30),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26))
 
 ggsave("uy_figure.png", height = 9, width = 7)
 ```
