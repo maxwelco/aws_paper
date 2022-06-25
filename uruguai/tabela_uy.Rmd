@@ -108,16 +108,28 @@ uy_table |>
   theme(legend.position = "right",
         legend.background = element_rect(colour = NA, fill = NA),
         legend.key = element_rect(colour = NA, fill = NA),
-        legend.key.size = unit(0.7, "lines"),
+        legend.key.size = unit(1, "lines"),
         legend.title = element_markdown(size = 30, face = "bold", 
                                         lineheight = 0.2),
-        legend.text = element_markdown(size = 28),
+        legend.text = element_markdown(size = 30),
         axis.title = element_markdown(size = 30),
         plot.caption = element_markdown(size = 20, color = "#333333"),
         axis.text = element_markdown(size = 25),
         strip.text = element_markdown(face = "bold", size = 26))
         legend.background = element_rect(color = NA)
 
-ggsave("uy_fig.png", width = 9, height = 5)
+ggsave("uy_fig.png", width = 9, height = 4)
+```
+
+
+```{r}
+uy_table %>% 
+  group_by(year) %>% 
+  arrange(desc(values)) %>% 
+  mutate(rank = row_number()) |> 
+  ggplot(aes(x = year, y = rank, color = moa_group,
+             label = moa_group)) +
+  geom_point(size = 8) +
+  geom_bump(size = 2, smooth = 8) 
 ```
 
