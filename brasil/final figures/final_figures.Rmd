@@ -578,10 +578,15 @@ colors <- c("#78A8D1",  "#EFBF6A", "#AF7366", "#CDD4E4",  "#E7CDC2",
 ```
 
 
+```{r}
+soa_total1 |> 
+  arrange(herbicide)
+```
 
 
 ```{r}
 soa_total1 %>% 
+  arrange(herbicide) |> 
   group_by(year) %>% 
   arrange(desc(total_ha_soa)) %>% 
   mutate(rank = row_number()) -> soa_total2
