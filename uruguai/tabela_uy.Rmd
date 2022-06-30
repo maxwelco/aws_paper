@@ -199,18 +199,17 @@ uy_table2 |>
         axis.ticks = element_blank(),
         axis.text.x = element_markdown(size = 30, face = "bold", 
                                        vjust = 0.5, margin = margin(0,0,0,0, 
-                                                                    unit = 'cm')))
+                                                                    unit = 'cm'))) -> fig6b
 
 ggsave("uy_fig1.png", bg = "#F9F6EE")
 ```
 
 ```{r}
-uy_table %>% 
-  filter(moa_group != "Other") |> 
-  group_by(year, moa_group) %>% 
-  summarise(values = round(mean(values),1)) |> 
-  arrange(desc(values)) %>% 
-  mutate(rank = row_number()) |> 
-  filter(moa_group == 2)
+library(patchwork)
+fig6a + fig6b +
+  plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 35, hjust = 0, vjust = 0))
+
+ggsave("figure6.png", width = 9, height = 5) 
 ```
 
