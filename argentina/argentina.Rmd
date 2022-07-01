@@ -10,7 +10,6 @@ library(gtExtras)
 library(gt)
 library(tidyverse)
 library(ggfittext)
-
 ```
 
 
@@ -174,14 +173,13 @@ fig6 |>
            size = 10,
            color = 1,
            x = 4, y = 30) +
-  theme(
-        legend.background = element_rect(colour = NA, fill = NA),
+  theme(legend.background = element_rect(colour = NA, fill = NA),
         legend.key = element_rect(colour = NA, fill = NA),
         legend.key.size = unit(0.7, "lines"),
         legend.text = element_markdown(size = 22),
         axis.title = element_markdown(size = 30),
         axis.text = element_markdown(size = 25),
-        strip.text = element_markdown(face = "bold", size = 26))
+        strip.text = element_markdown(face = "bold", size = 26)) -> fig6a
 
 ggsave("fig6.png")
 ```
