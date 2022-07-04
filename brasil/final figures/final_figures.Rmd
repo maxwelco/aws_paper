@@ -425,7 +425,7 @@ perc_increase3 %>%
 ```{r}
 perc_increase4 %>% 
   mutate(label = case_when(
-    ingrediente_ativo1 == "glufosinate" ~ "Values in kg ha<sup>-1</sup> (× 1000)",
+    ingrediente_ativo1 == "glufosinate" ~ "Values in kg (× 1000)",
     TRUE ~ NA_character_
   )) -> perc_increase5
 ```
