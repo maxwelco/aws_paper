@@ -254,7 +254,7 @@ uy_table2 |>
 
 ggsave("uy_fig1.png", bg = "#F9F6EE")
 ```
-
+  
 ```{r}
 library(patchwork)
 fig6a + fig6b +
