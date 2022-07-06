@@ -13,8 +13,8 @@ library(ggthemes)
 library(ggtext)
 library(reactablefmtr)
 library(ggbump)
+library(waffle)
 ```
-
 
 ```{r}
 read_csv("tabela_uy.csv") |> 
@@ -28,26 +28,6 @@ uy_table |>
   mutate(volumenes_cif_en_us = round(volumenes_cif_en_us, 0)) |> 
   pivot_wider(names_from = year, values_from = volumenes_cif_en_us) |> 
   dplyr::select(-moa_group) -> uy_table1
-```
-
-
-```{r}
-uy_table1 |> 
-  reactable(
-    compact = TRUE,
-    pagination = FALSE,
-    showSortIcon = FALSE,
-    defaultSorted = "1995",
-    defaultSortOrder = 'desc',
-      defaultColDef = colDef(
-    align = 'center', 
-    style = color_scales(uy_table1, 
-                         brighten_text = FALSE, 
-                         text_color = 'grey', 
-                         bold_text = TRUE, span = TRUE)
-))  -> tabuy
-
-save_reactable(tabuy, "table1.png")
 ```
 
 
@@ -123,6 +103,75 @@ uy_table |>
 ggsave("uy_fig.png", width = 9, height = 4)
 ```
 
+
+```{r}
+tribble(
+  ~year, ~volume, ~price, ~type,
+  1990, 0.380, 5, "A",
+  1995, 0.990, 12, "A",
+  1996, 1.291, 17, "A",
+  1997, 1.646, 21, "A",
+  1998, 2.058, 24, "A",
+  1999, 2.090, 23, "A",
+  2000, 2.080, 18, "A",
+  2005, 6.726, 37, "A",
+  2007, 10.991, 68, "A",
+  2014, 19.058, 155, "A",
+  2018, 12.488, 107, "A",
+  2020, 10.391, 77, "A"
+) -> fig6
+```
+
+
+```{r}
+ylim.prim <- c(0, 179)   # in this example, precipitation
+ylim.sec <- c(0, 22)    # in this example, temperature
+b <- diff(ylim.prim)/diff(ylim.sec)
+a <- ylim.prim[1] - b*ylim.sec[1] # there was a bug here
+```
+
+
+
+```{r}
+fig6 |> 
+  ggplot(aes(x = factor(year), y = a + volume*b)) +
+  geom_bar(stat = "identity", fill = "#E69F00", show.legend = TRUE) +
+  labs(x = NULL) +
+  scale_y_continuous(
+    "Volume (× 1000 ton of active ingredient)", 
+        sec.axis = sec_axis(~ (. - a)/b, name = "CIF price (million US$)",
+                        breaks = seq(0, 22, 5))) +
+  geom_point(aes(x = factor(year), y = price),
+             size = 3,
+             shape = 23,
+             fill = 1) +
+  geom_line(aes(x = factor(year), 
+                y = price, 
+                group = type),
+            show.legend = TRUE,
+            color = 1) +
+  theme_bw(base_family = "lato") +
+  annotate("richtext", label = "CIF price",
+           size = 10,
+           fill = "#E69F00",
+           fontface = "bold",
+           color = 1,
+           x = 7.4, y = 70) +
+  annotate("text", label = "Volume",
+           fontface = "bold",
+           size = 10,
+           color = 1,
+           x = 4, y = 30) +
+  theme(legend.background = element_rect(colour = NA, fill = NA),
+        legend.key = element_rect(colour = NA, fill = NA),
+        legend.key.size = unit(0.7, "lines"),
+        legend.text = element_markdown(size = 22),
+        axis.title = element_markdown(size = 30),
+        axis.text = element_markdown(size = 25),
+        strip.text = element_markdown(face = "bold", size = 26)) -> fig6a
+
+ggsave("fig6.png")
+```
 
 
 ```{r}
@@ -209,10 +258,11 @@ ggsave("uy_fig1.png", bg = "#F9F6EE")
 ```{r}
 library(patchwork)
 fig6a + fig6b +
+  plot_layout(widths = c(1.2, 1.8)) +
   plot_annotation(tag_levels = 'A') & 
   theme(plot.tag = element_text(size = 35, hjust = 0, vjust = 0))
 
-ggsave("figure6.png", width = 9, height = 5) 
+ggsave("figure6.png", width = 12, height = 5) 
 ```
 
 
@@ -268,13 +318,3 @@ ggsave("uy_fig2.png", bg = "#F9F6EE")
 ```
 
 
-```{r}
-
-+
-
-
-+
- -> fig6b
-
-
-```

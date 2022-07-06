@@ -67,6 +67,8 @@ read_csv("../fao/crop_harvest.csv") %>%
   group_by(year) %>% 
   summarise(area = sum(value)) -> area_br
 ```
+
+
 ```{r}
 read_csv("../fao/herbicide_fao.csv")  %>% 
   dplyr::select(Year, Unit, Value) %>% 
@@ -113,30 +115,32 @@ ggplot(aes(x = year, y = rate_herb, color = type,
                      breaks = seq(1980, 2020, by = 10)) +
   labs(y = expression(paste("Pesticide sales (US$ ha "^"-1",")")),
        x = NULL) +
-  scale_color_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
-  scale_fill_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+#  scale_color_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+#  scale_fill_manual(values = c("grey80", "#d2f8d2", "#FE4E00", "#e5e5ff")) +
+  scale_color_colorblind() +
+  scale_fill_colorblind() +
   scale_shape_manual(values = c(1, 1, 16, 1)) +
   annotate("text", x = 1998, y = 33, 
            fontface = "bold", size = 10,
-           label = "Herbicide", color = "#FE4E00") +
+           label = "Herbicide", color = "#56B4E9") +
   geom_curve(x = 2013, y = 55, 
                    xend = 2011, yend = 57,
                arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = 0.3, color = "#e5e5ff") + 
+               size = 0.4, curvature = 0.3, color = "#009e73") + 
   annotate("text", x = 2008, y = 57, #fontface = NULL,
-           label = "Inseticide", size = 10, color = "#e5e5ff") +
+           label = "Inseticide", size = 10, color = "#009e73") +
   geom_curve(x = 2007, y = 18, 
                    xend = 2009, yend = 15,
                arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = 0.3, color = "#d2f8d2") + 
+               size = 0.4, curvature = 0.3, color = "#E69F00") + 
   annotate("text", x = 2012, y = 15.5, #fontface = NULL,
-           label = "Fungicide", size = 10, color = "#d2f8d2") +
+           label = "Fungicide", size = 10, color = "#E69F00") +
   geom_curve(x = 2011, y = 1.5, 
                    xend = 2013, yend = 5,
                arrow = arrow(length = unit(0.07, "inch")), 
-               size = 0.4, curvature = -0.3, color = "grey80") + 
+               size = 0.4, curvature = -0.3, color = "#000000") + 
   annotate("text", x = 2016, y = 5, #fontface = NULL,
-           label = "Acaricide", size = 10, color = "grey80") +
+           label = "Acaricide", size = 10, color = "#000000") +
   geom_smooth(method = "loess", alpha = 0.05) +
   theme_bw() +
   theme(plot.title.position = "plot",
@@ -240,13 +244,15 @@ ai_rate %>%
   scale_x_continuous(limits = c(1990, 2020), #expand = c(.01, .01),
                      breaks = seq(1990, 2020, by = 5)) +
   scale_y_continuous(limits = c(0, 8), breaks = seq(0, 8, by = 1)) +
-  scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
-  scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
+#  scale_colour_manual(values = c("#FE4E00", "#4B0082")) +
+#  scale_fill_manual(values = c("#FE4E00", "#4B0082")) +
+  scale_fill_colorblind() +
+  scale_color_colorblind() +
   scale_shape_manual(values = c(16,1)) +
   annotate("text", x = 2015, y = 2.5, label = "Herbicide", 
-           color = "#FE4E00", fontface = "bold", size = 10) +
+           color = "#000000", fontface = "bold", size = 10) +
   annotate("text", x = 2015, y = 6, label = "Pesticides", 
-           color = "#4B0082", fontface = "bold", size = 10) +
+           color = "#E69F00", fontface = "bold", size = 10) +
 #  annotate("text", x = 2010, y = 0.1, 
 #           label = "Other pesticides: fungicide, insecticide and acaricide", 
 #           color = "#4B0082", size = 3) +
@@ -267,7 +273,9 @@ ai_rate %>%
 
 ```{r}
 library(patchwork)
-sales | herb
+sales + herb +
+  plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 35, hjust = 0, vjust = 0))
 
 ggsave("Figure 1.png", width = 10, height = 5)
 ```

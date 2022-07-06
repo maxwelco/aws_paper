@@ -101,7 +101,7 @@ py2 |>
   ylim(0, 5000) +
   labs(x = NULL,
        y = "kg of active ingredient (× 1000)",
-       caption = "**Source:** OCIT, 2021") +
+       caption = "**Source:** INBIO, 2021") +
   scale_fill_colorblind(guide = guide_legend(reverse = TRUE)) +
   scale_color_colorblind() +
   theme_bw() +
