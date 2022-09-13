@@ -15,23 +15,27 @@ library(rnaturalearthdata)
 library(ggspatial)
 theme_set(theme_bw())
 ```
-sovereignt
+
+
 ```{r}
-world <- ne_countries(scale = "medium", returnclass = "sf")
-class(world)
+world1 <- ne_countries(scale = "medium", returnclass = "sf") %>% 
+  filter(subregion %in% "South America") %>% 
+  mutate(country = case_when(
+    sovereignt == "Argentina" ~ "Argentina",
+    sovereignt == "Brazil" ~ "Brazil",
+    sovereignt == "Chile" ~ "Chile",
+    sovereignt == "Paraguay" ~ "Paraguay",
+    sovereignt == "Uruguay" ~ "Uruguay",
+    TRUE ~ NA_character_))
+
+class(world) 
 ```
 
-```{r}
-world |> tibble() |> 
-  arrange(sovereignt) |> 
-  filter(region_wb %in% "Latin America & Caribbean")
-```
-
 
 ```{r}
-world_points <- st_centroid(world)
-world_points <- cbind(world, 
-                      st_coordinates(st_centroid(world$geometry)))
+world_points <- st_centroid(world1)
+world_points <- cbind(world1, 
+                      st_coordinates(st_centroid(world1$geometry)))
 #  filter(subregion %in% "South America")
 ```
 
@@ -43,7 +47,7 @@ ggplot(data = world_points) +
   geom_sf() +
   geom_sf(world_points |> 
                     filter(continent == "South America"),
-          mapping = aes(fill = sovereignt)) +
+          mapping = aes(fill = country)) +
   coord_sf(xlim = c(-90, -30), ylim = c(-60, 17), expand = FALSE) +
   theme(panel.background = element_rect(fill = "aliceblue"),
         legend.position = c(0.80, 0.95),
@@ -60,14 +64,14 @@ ggplot(data = world_points) +
 ```{r}
 map1 +
   geom_text_repel(data= world_points |> 
-                    filter(continent == "South America"),
+                    filter(!is.na(country)),
                   aes(x=X, y=Y, label=name),
             size = 6, 
             seed = 165,
             color = "beige", 
             fontface = "bold") +
-  annotate(geom = "richtext", 
-           x = -89.9, 
+  annotate(geom = "text", 
+           x = -89.4, 
            y = 15, 
            fill = NA, 
            label.color = NA,
@@ -99,7 +103,7 @@ map1 +
                          which_north = "true",
                          pad_x = unit(0.05, "in"),
                          pad_y = unit(0.05, "in"), 
-                         style = north_arrow_nautical) +
+                         style = north_arrow_nautical) + 
   scale_fill_viridis_d(option = "H") -> map2
 ```
 
